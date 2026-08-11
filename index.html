@@ -1,0 +1,1793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#146b4f">
+<meta name="description" content="SIBOL — offline-first nutrition and learning screening for DepEd classrooms. WHO 5–19 z-scores, SF8 reports, and the nutrition x learning cross-analysis.">
+<title>SIBOL — Nutrition &amp; Learning Screening</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23146b4f'/%3E%3Cpath d='M32 50V28M32 28c0-8 6-14 14-14 0 8-6 14-14 14zM32 34c0-7-5-12-12-12 0 7 5 12 12 12z' stroke='%23fff' stroke-width='3.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+
+<!--
+  SIBOL — Nutrition-Learning Screening for Mindanao Classrooms
+  Single-file, offline-first, zero-dependency web application.
+
+  IMPORTANT — WHO REFERENCE DATA
+  This file ships WITHOUT the WHO Growth Reference 5-19 LMS tables embedded.
+  They must be generated from the official WHO .xlsx files, never typed from
+  memory. Run build_who_lms.py (see README.md) to produce who-lms.json,
+  then either place it beside this file or load it from the Reference data tab.
+  Until valid tables are loaded, SIBOL refuses to classify anyone.
+-->
+
+<style>
+:root{
+  --green:#146b4f; --green-d:#0e4d39; --green-l:#e7f3ee;
+  --ink:#12211d; --ink-2:#4a5a55; --ink-3:#7a8a85;
+  --line:#dce5e2; --bg:#f4f7f6; --card:#ffffff;
+  --sev:#8e1b1b; --wast:#d1691a; --norm:#1f7a4d; --over:#a8871a; --obese:#8a4f12;
+  --alert:#a3231f; --alert-bg:#fbeceb;
+  --focus:#0b6bcb;
+  --r:10px; --sh:0 1px 2px rgba(18,33,29,.06), 0 4px 14px rgba(18,33,29,.05);
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  color:var(--ink); background:var(--bg); -webkit-text-size-adjust:100%;
+}
+h1,h2,h3,h4{margin:0 0 .5rem; line-height:1.25; font-weight:650}
+h1{font-size:1.35rem} h2{font-size:1.15rem} h3{font-size:1rem} h4{font-size:.9rem}
+p{margin:0 0 .75rem}
+a{color:var(--green-d)}
+small{font-size:.8rem;color:var(--ink-2)}
+hr{border:0;border-top:1px solid var(--line);margin:1.25rem 0}
+
+/* ---------- layout ---------- */
+.app{display:flex;flex-direction:column;min-height:100dvh}
+header.top{
+  background:var(--green); color:#fff; padding:.6rem .9rem;
+  display:flex;align-items:center;gap:.7rem; position:sticky;top:0;z-index:40;
+  padding-top:calc(.6rem + env(safe-area-inset-top));
+}
+.brand{display:flex;align-items:baseline;gap:.5rem;font-weight:700;letter-spacing:.02em}
+.brand .sub{font-weight:400;font-size:.75rem;opacity:.85;letter-spacing:0}
+.top .spacer{flex:1}
+.pill{font-size:.7rem;padding:.2rem .5rem;border-radius:99px;background:rgba(255,255,255,.16);white-space:nowrap}
+.pill.warn{background:#ffd9d6;color:#7c1613;font-weight:600}
+
+nav.tabs{
+  display:flex;gap:.15rem;overflow-x:auto;background:var(--green-d);
+  position:sticky;top:0;z-index:39;-webkit-overflow-scrolling:touch;
+}
+nav.tabs button{
+  flex:0 0 auto;background:none;border:0;color:#cfe6dd;padding:.7rem .85rem;
+  font-size:.85rem;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;
+}
+nav.tabs button[aria-current="true"]{color:#fff;border-bottom-color:#8fd3b6;background:rgba(255,255,255,.06)}
+nav.tabs button:focus-visible{outline:2px solid #fff;outline-offset:-3px}
+
+main{flex:1;padding:1rem .9rem 4rem;max-width:1120px;width:100%;margin:0 auto}
+.view[hidden]{display:none}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:1rem;margin:0 0 1rem;box-shadow:var(--sh)}
+.card>h2:first-child,.card>h3:first-child{margin-top:0}
+.grid{display:grid;gap:.75rem}
+@media(min-width:720px){
+  .grid.c2{grid-template-columns:1fr 1fr}
+  .grid.c3{grid-template-columns:repeat(3,1fr)}
+  .grid.c4{grid-template-columns:repeat(4,1fr)}
+}
+.row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-end}
+.right{margin-left:auto}
+
+/* ---------- forms ---------- */
+label{display:block;font-size:.8rem;font-weight:600;color:var(--ink-2);margin:0 0 .25rem}
+input,select,textarea{
+  width:100%;font:inherit;color:var(--ink);background:#fff;
+  border:1.5px solid var(--line);border-radius:8px;padding:.6rem .65rem;
+}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--focus);outline-offset:1px;border-color:var(--focus)}
+input[type=checkbox]{width:auto;min-height:auto;transform:scale(1.25);margin-right:.4rem}
+.field{margin:0 0 .75rem}
+.big input{font-size:1.5rem;padding:.75rem;text-align:center;font-variant-numeric:tabular-nums;min-height:60px}
+fieldset{border:1px solid var(--line);border-radius:8px;padding:.75rem;margin:0 0 .75rem}
+legend{font-size:.8rem;font-weight:600;color:var(--ink-2);padding:0 .35rem}
+
+button,.btn{
+  font:inherit;font-weight:600;cursor:pointer;border-radius:8px;padding:.6rem .9rem;
+  border:1.5px solid var(--green);background:var(--green);color:#fff;min-height:44px;
+}
+button.sec,.btn.sec{background:#fff;color:var(--green-d)}
+button.ghost{background:transparent;border-color:var(--line);color:var(--ink-2)}
+button.danger{background:#fff;border-color:#d9b3b1;color:var(--alert)}
+button.tiny{min-height:32px;padding:.25rem .5rem;font-size:.78rem}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.seg{display:flex;border:1.5px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;border:0;border-radius:0;background:#fff;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--green-l);color:var(--green-d)}
+
+/* ---------- tables ---------- */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:.86rem}
+th,td{text-align:left;padding:.45rem .55rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.74rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2);background:#f8fbfa;position:sticky;top:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:.82rem}
+tr.flag td{background:#fff8f7}
+tbody tr:hover{background:#f6faf8}
+
+/* ---------- status chips ---------- */
+.chip{display:inline-block;font-size:.72rem;font-weight:700;padding:.15rem .45rem;border-radius:5px;white-space:nowrap;border:1px solid transparent}
+.s-sev{background:#f7dedd;color:var(--sev);border-color:#e9bcba}
+.s-wast{background:#fbe8d8;color:var(--wast);border-color:#f0cfae}
+.s-norm{background:#dff0e6;color:var(--norm);border-color:#bfe0cd}
+.s-over{background:#f7efd0;color:var(--over);border-color:#ecdfab}
+.s-obese{background:#f2e3d2;color:var(--obese);border-color:#e2caae}
+.s-tall{background:#e3ecf7;color:#1b4d80;border-color:#c3d6ec}
+.s-na{background:#eceeed;color:var(--ink-3);border-color:#dde1e0}
+
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:.75rem}
+.kpi .n{font-size:1.7rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi .l{font-size:.75rem;color:var(--ink-2)}
+.kpi.alert{border-color:#e5c3c1;background:var(--alert-bg)}
+.kpi.alert .n{color:var(--alert)}
+
+.note{background:var(--green-l);border-left:4px solid var(--green);padding:.7rem .85rem;border-radius:0 8px 8px 0;font-size:.86rem;margin:0 0 1rem}
+.note.warn{background:#fff6e8;border-color:#c78a20}
+.note.stop{background:var(--alert-bg);border-color:var(--alert)}
+.note p:last-child{margin:0}
+
+.bar{display:flex;align-items:center;gap:.5rem;margin:.2rem 0;font-size:.8rem}
+.bar .lab{flex:0 0 9.5rem;color:var(--ink-2)}
+.bar .track{flex:1;background:#eef2f1;border-radius:4px;height:18px;overflow:hidden}
+.bar .fill{height:100%;border-radius:4px}
+.bar .val{flex:0 0 4.5rem;text-align:right;font-family:var(--mono);font-size:.78rem}
+
+.empty{text-align:center;color:var(--ink-3);padding:2rem 1rem;font-size:.9rem}
+.mono{font-family:var(--mono);font-size:.85em}
+.muted{color:var(--ink-2)}
+.err{color:var(--alert);font-size:.8rem;font-weight:600}
+details{border:1px solid var(--line);border-radius:8px;padding:.6rem .75rem;margin:0 0 .6rem;background:#fff}
+summary{cursor:pointer;font-weight:600;font-size:.9rem}
+details[open] summary{margin-bottom:.5rem}
+ul.tight{margin:.25rem 0 .75rem;padding-left:1.15rem}
+ul.tight li{margin:.2rem 0}
+
+#toast{
+  position:fixed;left:50%;bottom:1.25rem;transform:translate(-50%,140%);
+  background:var(--ink);color:#fff;padding:.6rem 1rem;border-radius:99px;font-size:.85rem;
+  z-index:100;transition:transform .22s ease;max-width:90vw;box-shadow:0 6px 24px rgba(0,0,0,.25)
+}
+#toast.show{transform:translate(-50%,0)}
+
+dialog{border:0;border-radius:12px;padding:0;max-width:min(560px,94vw);width:100%;box-shadow:0 12px 48px rgba(0,0,0,.28)}
+dialog::backdrop{background:rgba(10,25,20,.45)}
+dialog .dlg{padding:1rem}
+dialog h3{margin-top:0}
+
+/* ---------- print ---------- */
+@media print{
+  header.top,nav.tabs,.noprint,#toast{display:none!important}
+  body{background:#fff;font-size:11pt}
+  main{max-width:none;padding:0}
+  .card{border:0;box-shadow:none;padding:0;margin:0 0 12pt;break-inside:avoid}
+  table{font-size:9.5pt}
+  th{background:#eee!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .chip{border:1px solid #999!important;background:#fff!important;color:#000!important}
+  .printonly{display:block!important}
+  @page{size:A4;margin:14mm}
+}
+.printonly{display:none}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header class="top">
+  <div class="brand"><span>SIBOL</span><span class="sub">Nutrition &times; Learning Screening</span></div>
+  <div class="spacer"></div>
+  <span class="pill" id="pillRef">reference data: checking…</span>
+  <span class="pill" id="pillClass">no class</span>
+</header>
+
+<nav class="tabs" id="tabs" aria-label="Sections"></nav>
+
+<main>
+
+<!-- =================== SETUP =================== -->
+<section class="view" id="v-setup" hidden>
+  <div class="card">
+    <h2>School &amp; class setup</h2>
+    <p class="muted">These details appear on the SF8 report header. Everything is stored on this device only.</p>
+    <div class="grid c2">
+      <div class="field"><label for="schName">School name</label><input id="schName" placeholder="e.g. Bulua Central School"></div>
+      <div class="field"><label for="schId">School ID</label><input id="schId" placeholder="e.g. 123456"></div>
+      <div class="field"><label for="schDiv">Division</label><input id="schDiv" placeholder="e.g. Cagayan de Oro City"></div>
+      <div class="field"><label for="schRegion">Region</label><input id="schRegion" placeholder="e.g. Region X"></div>
+      <div class="field"><label for="schDistrict">District</label><input id="schDistrict" placeholder="e.g. District II"></div>
+      <div class="field"><label for="schYear">School year</label><input id="schYear" placeholder="e.g. 2026–2027"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Classes</h3>
+    <div class="grid c4">
+      <div class="field"><label for="clGrade">Grade level</label><input id="clGrade" placeholder="e.g. 4"></div>
+      <div class="field"><label for="clSection">Section</label><input id="clSection" placeholder="e.g. Sampaguita"></div>
+      <div class="field"><label for="clAdviser">Adviser</label><input id="clAdviser" placeholder="Teacher name"></div>
+      <div class="field" style="display:flex;align-items:flex-end"><button id="addClass" style="width:100%">Add class</button></div>
+    </div>
+    <div class="tw"><table id="tblClasses"><thead><tr><th>Grade</th><th>Section</th><th>Adviser</th><th class="num">Learners</th><th></th></tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="card">
+    <h3>Privacy</h3>
+    <div class="field">
+      <label style="display:flex;align-items:center;font-size:.95rem;color:var(--ink)">
+        <input type="checkbox" id="anonMode"> Anonymisation mode — replace learner names with codes everywhere on screen, in exports and in reports
+      </label>
+      <small>Use this for research, for sharing screenshots, or whenever the device leaves the classroom. Names stay on the device; they are simply not displayed.</small>
+    </div>
+    <div class="note">
+      <p><strong>Data stays here.</strong> SIBOL writes to this browser's local database and sends nothing anywhere. Clearing site data, or the browser clearing it for you, deletes everything — export a backup regularly from the Reports tab.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =================== ROSTER =================== -->
+<section class="view" id="v-roster" hidden>
+  <div class="card">
+    <h2>Class roster</h2>
+    <div class="row">
+      <div class="field" style="flex:1;min-width:200px"><label for="rosterClass">Class</label><select id="rosterClass"></select></div>
+      <div class="field"><button class="sec" id="btnImportRoster">Import CSV</button></div>
+      <div class="field"><button class="sec" id="btnExportRoster">Export CSV</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Add learner</h3>
+    <div class="grid c3">
+      <div class="field"><label for="lnLast">Last name</label><input id="lnLast" autocomplete="off"></div>
+      <div class="field"><label for="lnFirst">First name</label><input id="lnFirst" autocomplete="off"></div>
+      <div class="field"><label for="lnMiddle">Middle name</label><input id="lnMiddle" autocomplete="off"></div>
+      <div class="field"><label for="lnSex">Sex</label><select id="lnSex"><option value="M">Male</option><option value="F">Female</option></select></div>
+      <div class="field"><label for="lnBirth">Birthdate</label><input id="lnBirth" type="date"></div>
+      <div class="field"><label for="lnLrn">LRN (optional)</label><input id="lnLrn" inputmode="numeric" autocomplete="off"></div>
+    </div>
+    <div class="row"><button id="addLearner">Add learner</button><span class="err" id="learnerErr"></span></div>
+  </div>
+
+  <div class="card">
+    <h3>Learners <span class="muted" id="rosterCount"></span></h3>
+    <div class="tw"><table id="tblRoster">
+      <thead><tr><th>#</th><th>Name</th><th>Sex</th><th>Birthdate</th><th class="num">Age</th><th>LRN</th><th></th></tr></thead>
+      <tbody></tbody></table></div>
+  </div>
+</section>
+
+<!-- =================== MEASURE =================== -->
+<section class="view" id="v-measure" hidden>
+  <div class="card">
+    <div class="row">
+      <div class="field" style="flex:1;min-width:180px"><label for="measClass">Class</label><select id="measClass"></select></div>
+      <div class="field" style="flex:1;min-width:180px"><label for="measRound">Measurement round</label>
+        <select id="measRound"><option value="baseline">Baseline (start of SY)</option><option value="endline">Endline (end of SY)</option></select></div>
+      <div class="field" style="flex:1;min-width:150px"><label for="measDate">Date measured</label><input id="measDate" type="date"></div>
+    </div>
+    <details>
+      <summary>Anthropometric protocol &amp; calibration checklist — read before you measure</summary>
+      <h4>Before the session</h4>
+      <ul class="tight">
+        <li>Place the scale on a hard, flat, level surface. Never on carpet, soil or a tilted floor.</li>
+        <li>Zero the scale. Verify it with a known weight (a sealed 1 L bottle of water = 1.0 kg); repeat three times and confirm the same reading.</li>
+        <li>Fix the height board or tape to a wall with no skirting board. Check with a spirit level or plumb line that it is vertical, and that 0 cm sits exactly on the floor.</li>
+        <li>Record the room and the equipment used, so a repeat round can use the same setup.</li>
+      </ul>
+      <h4>Weight</h4>
+      <ul class="tight">
+        <li>Light clothing, no shoes, no jacket, pockets emptied, no bag or ID lace.</li>
+        <li>Learner stands still in the centre of the platform, arms at sides, looking straight ahead.</li>
+        <li>Read to the nearest 0.1 kg once the display stops changing.</li>
+      </ul>
+      <h4>Height (standing, 5 years and older)</h4>
+      <ul class="tight">
+        <li>No shoes, no headwear; undo buns and thick braids on the crown.</li>
+        <li>Heels together, back of head, shoulder blades, buttocks, calves and heels touching the board where the body shape allows.</li>
+        <li>Head in the Frankfort plane: the line from the lower edge of the eye socket to the ear canal opening is horizontal.</li>
+        <li>Ask the learner to breathe in and stand tall; lower the headpiece to compress the hair; read at eye level to the nearest 0.1 cm.</li>
+      </ul>
+      <h4>Quality control</h4>
+      <ul class="tight">
+        <li>Re-measure every 10th learner independently. If height differs by more than 0.5 cm or weight by more than 0.1 kg, re-measure the whole batch.</li>
+        <li>SIBOL flags biologically implausible values, but it cannot detect a scale that is consistently 2 kg out. Only calibration can.</li>
+      </ul>
+    </details>
+  </div>
+
+  <div class="card" id="measCard">
+    <h3 id="measName">—</h3>
+    <p class="muted" id="measMeta">Select a class to begin.</p>
+    <div class="grid c2">
+      <div class="field big"><label for="inHeight">Height (cm)</label><input id="inHeight" type="number" inputmode="decimal" step="0.1" min="60" max="220" placeholder="0.0"></div>
+      <div class="field big"><label for="inWeight">Weight (kg)</label><input id="inWeight" type="number" inputmode="decimal" step="0.1" min="8" max="150" placeholder="0.0"></div>
+    </div>
+    <div id="livePreview"></div>
+    <div class="row" style="margin-top:.5rem">
+      <button class="sec" id="btnPrev">&larr; Previous</button>
+      <button id="btnSaveNext" style="flex:1">Save &amp; next &rarr;</button>
+      <button class="ghost" id="btnSkip">Skip</button>
+    </div>
+    <p><small id="measProgress"></small></p>
+  </div>
+
+  <div class="card">
+    <h3>This round</h3>
+    <div class="tw"><table id="tblMeas">
+      <thead><tr><th>Name</th><th class="num">Age (mo)</th><th class="num">Ht</th><th class="num">Wt</th><th class="num">BMI</th><th class="num">BAZ</th><th>Nutritional status</th><th class="num">HAZ</th><th>Height status</th><th></th></tr></thead>
+      <tbody></tbody></table></div>
+  </div>
+</section>
+
+<!-- =================== LEARNING =================== -->
+<section class="view" id="v-learning" hidden>
+  <div class="card">
+    <h2>Learning indicator</h2>
+    <p class="muted">One field per learner per quarter. This is a triage signal, not a validated literacy instrument — SIBOL uses it to rank who needs attention first, not to grade anyone.</p>
+    <div class="row">
+      <div class="field" style="flex:1;min-width:180px"><label for="lrnClass">Class</label><select id="lrnClass"></select></div>
+      <div class="field" style="flex:1;min-width:140px"><label for="lrnQuarter">Quarter</label>
+        <select id="lrnQuarter"><option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option></select></div>
+      <div class="field" style="flex:1;min-width:200px"><label for="lrnType">Indicator type</label>
+        <select id="lrnType">
+          <option value="reading">Reading level band</option>
+          <option value="numeracy">Numeracy band</option>
+          <option value="grade">Quarterly grade (numeric)</option>
+        </select></div>
+    </div>
+    <p><small id="lrnBandHelp"></small></p>
+  </div>
+
+  <div class="card">
+    <h3>Entry</h3>
+    <div class="tw"><table id="tblLearning">
+      <thead><tr><th>Name</th><th>Nutritional status</th><th style="min-width:210px">Learning</th><th>Benchmark</th></tr></thead>
+      <tbody></tbody></table></div>
+  </div>
+</section>
+
+<!-- =================== ANALYSIS =================== -->
+<section class="view" id="v-analysis" hidden>
+  <div class="card">
+    <div class="row">
+      <div class="field" style="flex:1;min-width:180px"><label for="anClass">Scope</label><select id="anClass"></select></div>
+      <div class="field" style="flex:1;min-width:140px"><label for="anRound">Round</label>
+        <select id="anRound"><option value="baseline">Baseline</option><option value="endline">Endline</option></select></div>
+      <div class="field" style="flex:1;min-width:140px"><label for="anQuarter">Quarter</label>
+        <select id="anQuarter"><option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option></select></div>
+    </div>
+  </div>
+  <div id="anOut"></div>
+</section>
+
+<!-- =================== REPORTS =================== -->
+<section class="view" id="v-reports" hidden>
+  <div class="card noprint">
+    <h2>Reports &amp; exports</h2>
+    <div class="row">
+      <div class="field" style="flex:1;min-width:180px"><label for="rpClass">Scope</label><select id="rpClass"></select></div>
+      <div class="field" style="flex:1;min-width:200px"><label for="rpKind">Report</label>
+        <select id="rpKind">
+          <option value="sf8">SF8 — Nutritional Status Report</option>
+          <option value="sbfp">SBFP beneficiary shortlist</option>
+          <option value="double">Double-burden priority list</option>
+          <option value="referral">Referral list (severe cases)</option>
+          <option value="movement">Baseline vs endline movement</option>
+          <option value="class">Printable class summary</option>
+        </select></div>
+      <div class="field"><button class="sec" id="btnPrint">Print / PDF</button></div>
+      <div class="field"><button class="sec" id="btnCsv">Download CSV</button></div>
+    </div>
+  </div>
+  <div id="rpOut"></div>
+  <div class="card noprint">
+    <h3>Backup</h3>
+    <p class="muted">A backup is a single JSON file containing every class, learner, measurement and learning entry on this device. Keep one per measurement round.</p>
+    <div class="row">
+      <button class="sec" id="btnBackup">Download backup</button>
+      <button class="sec" id="btnRestore">Restore backup</button>
+      <button class="danger right" id="btnWipe">Erase all data</button>
+    </div>
+  </div>
+</section>
+
+<!-- =================== REFERENCE DATA =================== -->
+<section class="view" id="v-ref" hidden>
+  <div class="card">
+    <h2>WHO reference data</h2>
+    <div id="refStatus"></div>
+    <h3>Why this is a separate step</h3>
+    <p>SIBOL classifies learners against the <strong>WHO Growth Reference 5–19 years</strong> (de Onis et al., 2007) using the LMS parameters WHO publishes. Those parameters are numbers; getting one wrong misclassifies real children. They are therefore never typed in by hand or reproduced from memory — they are converted directly from the official WHO spreadsheets.</p>
+    <h3>How to load them</h3>
+    <ol class="tight">
+      <li>Download the four <em>expanded tables for constructing national health cards</em> (z-scores, boys and girls) for <strong>BMI-for-age</strong> and <strong>Height-for-age</strong> from who.int — links are in the project README.</li>
+      <li>Run <code class="mono">python3 build_who_lms.py</code> in the project folder. It reads the four <code class="mono">.xlsx</code> files and writes <code class="mono">who-lms.json</code>.</li>
+      <li>Deploy <code class="mono">who-lms.json</code> beside <code class="mono">index.html</code>. SIBOL loads it automatically and caches it offline.</li>
+    </ol>
+    <p>On a device with no copy of the file, load it once here and it is stored locally:</p>
+    <div class="row">
+      <input type="file" id="refFile" accept=".json,application/json" style="max-width:340px">
+      <button class="sec" id="btnRefReload">Re-check for who-lms.json</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Method</h3>
+    <p>For a measurement <em>X</em> at a given sex and age in completed months, with WHO parameters <em>L</em>, <em>M</em>, <em>S</em>:</p>
+    <p class="mono" style="background:#f8fbfa;padding:.6rem;border-radius:8px">z = ((X / M)<sup>L</sup> − 1) / (L · S)&nbsp;&nbsp;&nbsp;(and z = ln(X / M) / S when L = 0)</p>
+    <p>For BMI-for-age, WHO restricts the Box–Cox distribution to the interval where empirical data exist. Beyond ±3 SD, SIBOL applies WHO's documented linear extrapolation rather than the raw LMS value:</p>
+    <p class="mono" style="background:#f8fbfa;padding:.6rem;border-radius:8px">z &gt; 3 → 3 + (X − SD3⁺) / (SD3⁺ − SD2⁺)<br>z &lt; −3 → −3 + (X − SD3⁻) / (SD2⁻ − SD3⁻)</p>
+    <p>Height-for-age is a length-based indicator and is not truncated. Cut-offs follow WHO and DepEd School Form 8:</p>
+    <div class="tw"><table>
+      <thead><tr><th>BMI-for-age (BAZ)</th><th>Nutritional status</th><th>Height-for-age (HAZ)</th><th>Height status</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">&lt; −3</td><td><span class="chip s-sev">Severely wasted</span></td><td class="mono">&lt; −3</td><td><span class="chip s-sev">Severely stunted</span></td></tr>
+        <tr><td class="mono">−3 to &lt; −2</td><td><span class="chip s-wast">Wasted</span></td><td class="mono">−3 to &lt; −2</td><td><span class="chip s-wast">Stunted</span></td></tr>
+        <tr><td class="mono">−2 to +1</td><td><span class="chip s-norm">Normal</span></td><td class="mono">−2 to +2</td><td><span class="chip s-norm">Normal</span></td></tr>
+        <tr><td class="mono">&gt; +1 to +2</td><td><span class="chip s-over">Overweight</span></td><td class="mono">&gt; +2</td><td><span class="chip s-tall">Tall</span></td></tr>
+        <tr><td class="mono">&gt; +2</td><td><span class="chip s-obese">Obese</span></td><td></td><td></td></tr>
+      </tbody></table></div>
+  </div>
+</section>
+
+<!-- =================== ABOUT =================== -->
+<section class="view" id="v-about" hidden>
+  <div class="card">
+    <h2>About SIBOL</h2>
+    <p><strong>SIBOL</strong> — Filipino, <em>to sprout, to grow</em>. DepEd already measures every learner twice a year for School Form 8. Those measurements decide who receives School-Based Feeding Program support, and then they stop being useful: recorded on paper, hand-classified against WHO tables, submitted upward as compliance counts. The teacher who took the measurement rarely gets an interpretation back, and the nutrition data is never joined to the learning data sitting in the same class record.</p>
+    <p>SIBOL joins them, offline, on the phone the teacher already owns, and answers the question the system currently cannot: <strong>are the learners who are wasted or stunted the same learners who are failing to read?</strong></p>
+  </div>
+  <div class="card">
+    <h3>Honest limitations</h3>
+    <ul class="tight">
+      <li><strong>SIBOL detects association, not causation.</strong> A significant chi-square between nutritional status and learning band does not mean malnutrition caused the reading difficulty. It means the two are occurring in the same children, which is enough to justify acting.</li>
+      <li><strong>Output quality is capped by measurement quality.</strong> An uncalibrated scale or a badly-positioned head corrupts every z-score downstream. The protocol guide is a core feature, not an extra.</li>
+      <li><strong>SIBOL does not diagnose.</strong> It flags learners for teacher and health-worker attention. Severe cases go to a health professional, always.</li>
+      <li><strong>The learning indicator is teacher-reported and coarse.</strong> Adequate for triage and priority-setting; not a validated literacy instrument.</li>
+      <li><strong>Child health data carries real obligations.</strong> Local-first storage and anonymisation mode are deliberate design responses, but a pilot still needs school consent and a data agreement.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Reference</h3>
+    <p>de Onis M, Onyango AW, Borghi E, Siyam A, Nishida C, Siekmann J. Development of a WHO growth reference for school-aged children and adolescents. <em>Bulletin of the World Health Organization</em> 2007;85(9):660–667.</p>
+    <p class="muted"><small>SIBOL is an independent tool. It is not produced, endorsed or certified by WHO or by the Department of Education.</small></p>
+    <p><small class="muted">Version <span id="appVer"></span> · storage: <span id="storeInfo">—</span></small></p>
+  </div>
+</section>
+
+</main>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<dialog id="dlg"><form method="dialog" class="dlg" id="dlgForm"></form></dialog>
+
+<script id="who-lms-data" type="application/json">null</script>
+
+<script>
+"use strict";
+/* =====================================================================
+   SIBOL — core
+   ===================================================================== */
+const APP = { version: "1.0.0", db: "sibol", store: "kv", key: "state" };
+
+/* ---------- tiny helpers ---------- */
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const el = (tag, attrs, kids) => {
+  const n = document.createElement(tag);
+  if (attrs) for (const k in attrs) {
+    if (k === "class") n.className = attrs[k];
+    else if (k === "html") n.innerHTML = attrs[k];
+    else if (k === "text") n.textContent = attrs[k];
+    else if (k.startsWith("on") && typeof attrs[k] === "function") n.addEventListener(k.slice(2), attrs[k]);
+    else if (attrs[k] !== null && attrs[k] !== undefined && attrs[k] !== false) n.setAttribute(k, attrs[k]);
+  }
+  (kids || []).forEach(c => n.appendChild(typeof c === "string" ? document.createTextNode(c) : c));
+  return n;
+};
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const r1  = n => Math.round(n * 10) / 10;
+const r2  = n => Math.round(n * 100) / 100;
+const pct = (a, b) => (b ? (100 * a / b) : 0);
+const fmtZ = z => (z == null || !isFinite(z)) ? "—" : (z >= 0 ? "+" : "") + z.toFixed(2);
+
+let toastT;
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+/* ---------- storage (IndexedDB, whole-document, debounced) ---------- */
+const DB = {
+  _p: null,
+  open() {
+    if (this._p) return this._p;
+    this._p = new Promise((res, rej) => {
+      if (!self.indexedDB) return rej(new Error("no-idb"));
+      const rq = indexedDB.open(APP.db, 1);
+      rq.onupgradeneeded = () => rq.result.createObjectStore(APP.store);
+      rq.onsuccess = () => res(rq.result);
+      rq.onerror = () => rej(rq.error);
+    });
+    return this._p;
+  },
+  async get(k) {
+    try {
+      const db = await this.open();
+      return await new Promise((res, rej) => {
+        const rq = db.transaction(APP.store, "readonly").objectStore(APP.store).get(k);
+        rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error);
+      });
+    } catch (e) { try { const v = localStorage.getItem("sibol:" + k); return v ? JSON.parse(v) : undefined; } catch (_) { return undefined; } }
+  },
+  async set(k, v) {
+    try {
+      const db = await this.open();
+      return await new Promise((res, rej) => {
+        const rq = db.transaction(APP.store, "readwrite").objectStore(APP.store).put(v, k);
+        rq.onsuccess = () => res(true); rq.onerror = () => rej(rq.error);
+      });
+    } catch (e) { try { localStorage.setItem("sibol:" + k, JSON.stringify(v)); return true; } catch (_) { return false; } }
+  }
+};
+
+/* ---------- application state ---------- */
+const BLANK = () => ({
+  v: 1,
+  school: { name: "", id: "", division: "", region: "", district: "", year: "" },
+  settings: { anon: false, indicator: "reading", measDate: "", round: "baseline", quarter: "Q1" },
+  classes: [], learners: [], measurements: [], learning: []
+});
+let S = BLANK();
+let saveT;
+function save() {
+  clearTimeout(saveT);
+  saveT = setTimeout(() => DB.set(APP.key, S), 220);
+}
+
+/* =====================================================================
+   WHO Growth Reference 5-19 — LMS engine
+   Tables are NOT bundled. See build_who_lms.py.
+   Schema:  { meta:{...}, bfa:{ M:{"61":[L,M,S],...}, F:{...} }, hfa:{ M:{...}, F:{...} } }
+   ===================================================================== */
+const WHO = {
+  data: null,
+  source: "none",
+  get ready() { return !!(this.data && this.data.bfa && this.data.hfa); },
+
+  validate(d) {
+    if (!d || typeof d !== "object") return "not an object";
+    for (const ind of ["bfa", "hfa"]) {
+      if (!d[ind]) return "missing " + ind + " table";
+      for (const sex of ["M", "F"]) {
+        const t = d[ind][sex];
+        if (!t || typeof t !== "object") return "missing " + ind + "." + sex;
+        const keys = Object.keys(t);
+        if (keys.length < 150) return ind + "." + sex + " has only " + keys.length + " age rows (expected ~168)";
+        for (const k of keys) {
+          const row = t[k];
+          if (!Array.isArray(row) || row.length < 3 || row.some(x => typeof x !== "number" || !isFinite(x)))
+            return ind + "." + sex + " month " + k + " is not [L,M,S] numbers";
+          if (row[1] <= 0 || row[2] <= 0) return ind + "." + sex + " month " + k + " has non-positive M or S";
+        }
+      }
+    }
+    return null;
+  },
+
+  /** age in COMPLETED months between two ISO dates */
+  ageMonths(birthISO, dateISO) {
+    if (!birthISO || !dateISO) return null;
+    const b = new Date(birthISO + "T00:00:00"), d = new Date(dateISO + "T00:00:00");
+    if (isNaN(b) || isNaN(d) || d < b) return null;
+    let m = (d.getFullYear() - b.getFullYear()) * 12 + (d.getMonth() - b.getMonth());
+    if (d.getDate() < b.getDate()) m -= 1;
+    return m < 0 ? null : m;
+  },
+
+  lms(indicator, sex, months) {
+    if (!this.ready) return null;
+    const t = this.data[indicator] && this.data[indicator][sex];
+    if (!t) return null;
+    const row = t[String(months)];
+    return row ? { L: row[0], M: row[1], S: row[2] } : null;
+  },
+
+  /** value at a given z, from LMS */
+  valueAtZ(p, z) {
+    return p.L === 0 ? p.M * Math.exp(p.S * z) : p.M * Math.pow(1 + p.L * p.S * z, 1 / p.L);
+  },
+
+  rawZ(p, X) {
+    return p.L === 0 ? Math.log(X / p.M) / p.S : (Math.pow(X / p.M, p.L) - 1) / (p.L * p.S);
+  },
+
+  /**
+   * z-score. `truncate` applies WHO's documented linear extrapolation beyond
+   * +/-3 SD, which WHO specifies for weight-based indicators (BMI-for-age).
+   * Height-for-age is not truncated.
+   */
+  z(indicator, sex, months, X) {
+    if (X == null || !isFinite(X) || X <= 0) return { z: null, reason: "no-value" };
+    if (months == null) return { z: null, reason: "no-age" };
+    if (!this.ready) return { z: null, reason: "no-reference" };
+    const p = this.lms(indicator, sex, months);
+    if (!p) return { z: null, reason: "age-out-of-range" };
+    let z = this.rawZ(p, X);
+    if (indicator === "bfa") {
+      if (z > 3) {
+        const sd3 = this.valueAtZ(p, 3), sd2 = this.valueAtZ(p, 2);
+        z = 3 + (X - sd3) / (sd3 - sd2);
+      } else if (z < -3) {
+        const sd3n = this.valueAtZ(p, -3), sd2n = this.valueAtZ(p, -2);
+        z = -3 + (X - sd3n) / (sd2n - sd3n);
+      }
+    }
+    return { z: isFinite(z) ? z : null, reason: isFinite(z) ? null : "compute-error" };
+  }
+};
+
+/* ---------- classification (WHO 2007 / DepEd SF8) ---------- */
+const BAZ_CATS = [
+  { key: "SW", label: "Severely wasted", chip: "s-sev",   under: true,  test: z => z < -3 },
+  { key: "W",  label: "Wasted",          chip: "s-wast",  under: true,  test: z => z >= -3 && z < -2 },
+  { key: "N",  label: "Normal",          chip: "s-norm",  under: false, test: z => z >= -2 && z <= 1 },
+  { key: "OW", label: "Overweight",      chip: "s-over",  under: false, test: z => z > 1 && z <= 2 },
+  { key: "OB", label: "Obese",           chip: "s-obese", under: false, test: z => z > 2 }
+];
+const HAZ_CATS = [
+  { key: "SS", label: "Severely stunted", chip: "s-sev",  under: true,  test: z => z < -3 },
+  { key: "ST", label: "Stunted",          chip: "s-wast", under: true,  test: z => z >= -3 && z < -2 },
+  { key: "N",  label: "Normal",           chip: "s-norm", under: false, test: z => z >= -2 && z <= 2 },
+  { key: "T",  label: "Tall",             chip: "s-tall", under: false, test: z => z > 2 }
+];
+const classify = (cats, z) => (z == null || !isFinite(z)) ? null : (cats.find(c => c.test(z)) || null);
+const catByKey = (cats, k) => cats.find(c => c.key === k) || null;
+
+/* ---------- plausibility guards ---------- */
+function plausible(heightCm, weightKg) {
+  const w = [];
+  if (heightCm != null) {
+    if (heightCm < 80 || heightCm > 200) w.push("height " + heightCm + " cm is outside 80–200 cm");
+    else if (heightCm < 95 || heightCm > 190) w.push("height " + heightCm + " cm is unusual — re-check");
+  }
+  if (weightKg != null) {
+    if (weightKg < 8 || weightKg > 150) w.push("weight " + weightKg + " kg is outside 8–150 kg");
+    else if (weightKg < 12 || weightKg > 120) w.push("weight " + weightKg + " kg is unusual — re-check");
+  }
+  if (heightCm && weightKg) {
+    const bmi = weightKg / Math.pow(heightCm / 100, 2);
+    if (bmi < 8 || bmi > 45) w.push("BMI " + r1(bmi) + " is implausible — check that height and weight were not swapped");
+  }
+  return w;
+}
+
+/* =====================================================================
+   Statistics
+   ===================================================================== */
+const Stats = {
+  /** regularized lower incomplete gamma P(a,x) — Numerical Recipes gser/gcf */
+  lgamma(x) {
+    const c = [76.18009172947146, -86.50532032941677, 24.01409824083091,
+               -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5];
+    let y = x, t = x + 5.5;
+    t -= (x + 0.5) * Math.log(t);
+    let s = 1.000000000190015;
+    for (let j = 0; j < 6; j++) s += c[j] / ++y;
+    return -t + Math.log(2.5066282746310005 * s / x);
+  },
+  gammaP(a, x) {
+    if (x < 0 || a <= 0) return NaN;
+    if (x === 0) return 0;
+    if (x < a + 1) {                                  // series
+      let ap = a, sum = 1 / a, del = sum;
+      for (let n = 0; n < 500; n++) {
+        ap++; del *= x / ap; sum += del;
+        if (Math.abs(del) < Math.abs(sum) * 1e-14) break;
+      }
+      return sum * Math.exp(-x + a * Math.log(x) - this.lgamma(a));
+    }
+    // continued fraction for Q, then P = 1 - Q
+    const FPMIN = 1e-300;
+    let b = x + 1 - a, c = 1 / FPMIN, d = 1 / b, h = d;
+    for (let i = 1; i <= 500; i++) {
+      const an = -i * (i - a);
+      b += 2; d = an * d + b; if (Math.abs(d) < FPMIN) d = FPMIN;
+      c = b + an / c;         if (Math.abs(c) < FPMIN) c = FPMIN;
+      d = 1 / d; const del = d * c; h *= del;
+      if (Math.abs(del - 1) < 1e-14) break;
+    }
+    return 1 - Math.exp(-x + a * Math.log(x) - this.lgamma(a)) * h;
+  },
+  /** upper-tail p for chi-square */
+  chiP(chi2, df) {
+    if (!isFinite(chi2) || chi2 < 0 || df < 1) return NaN;
+    if (chi2 === 0) return 1;
+    return 1 - this.gammaP(df / 2, chi2 / 2);
+  },
+  fmtP(p) {
+    if (!isFinite(p)) return "—";
+    if (p < 0.0001) return "p < 0.0001";
+    return "p = " + p.toFixed(4);
+  },
+
+  /**
+   * Chi-square test of independence on an r x c matrix of counts.
+   * Applies Yates' continuity correction for 2x2, as is conventional.
+   */
+  chiSquare(obs) {
+    const R = obs.length, C = obs[0] ? obs[0].length : 0;
+    const rt = obs.map(r => r.reduce((a, b) => a + b, 0));
+    const ct = []; for (let j = 0; j < C; j++) ct[j] = obs.reduce((a, r) => a + r[j], 0);
+    const N = rt.reduce((a, b) => a + b, 0);
+    if (!N || R < 2 || C < 2) return { ok: false, why: "table too small", N: N };
+    const exp = [], flat = [];
+    let chi2 = 0, minExp = Infinity, nSmall = 0;
+    const yates = (R === 2 && C === 2);
+    for (let i = 0; i < R; i++) {
+      exp[i] = [];
+      for (let j = 0; j < C; j++) {
+        const e = rt[i] * ct[j] / N;
+        exp[i][j] = e; flat.push(e);
+        if (e < minExp) minExp = e;
+        if (e < 5) nSmall++;
+        if (e > 0) {
+          let dv = Math.abs(obs[i][j] - e);
+          if (yates) dv = Math.max(0, dv - 0.5);
+          chi2 += dv * dv / e;
+        }
+      }
+    }
+    const df = (R - 1) * (C - 1);
+    const p = this.chiP(chi2, df);
+    const k = Math.min(R, C) - 1;
+    const v = k > 0 ? Math.sqrt(chi2 / (N * k)) : NaN;
+    return {
+      ok: true, chi2, df, p, N, exp, cramersV: v, yates,
+      minExp, pctSmall: 100 * nSmall / flat.length,
+      reliable: minExp >= 5 && (100 * nSmall / flat.length) <= 20
+    };
+  },
+
+  /** McNemar on paired binary status (b, c are the discordant cells) */
+  mcNemar(b, c) {
+    const n = b + c;
+    if (n === 0) return { ok: false, why: "no learner changed status", b, c };
+    const chi2 = Math.pow(Math.abs(b - c) - 1, 2) / n;  // with continuity correction
+    return { ok: true, b, c, n, chi2, df: 1, p: this.chiP(chi2, 1), exact: n < 25 };
+  },
+
+  /** Wilson 95% CI for a proportion */
+  wilson(k, n) {
+    if (!n) return [0, 0];
+    const z = 1.959963985, p = k / n, d = 1 + z * z / n;
+    const centre = (p + z * z / (2 * n)) / d;
+    const half = (z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n))) / d;
+    return [Math.max(0, centre - half), Math.min(1, centre + half)];
+  }
+};
+
+/* =====================================================================
+   Learning indicator definitions
+   ===================================================================== */
+const INDICATORS = {
+  reading: {
+    label: "Reading level band",
+    help: "Bands follow the Phil-IRI style progression. Non-reader, Frustration and Instructional are treated as below benchmark.",
+    bands: [
+      { key: "NR", label: "Non-reader",    below: true },
+      { key: "FR", label: "Frustration",   below: true },
+      { key: "IN", label: "Instructional", below: true },
+      { key: "ID", label: "Independent",   below: false }
+    ]
+  },
+  numeracy: {
+    label: "Numeracy band",
+    help: "Not proficient and Low proficient are treated as below benchmark.",
+    bands: [
+      { key: "NP", label: "Not proficient",     below: true },
+      { key: "LP", label: "Low proficient",     below: true },
+      { key: "AP", label: "Nearly proficient",  below: false },
+      { key: "PR", label: "Proficient",         below: false }
+    ]
+  },
+  grade: {
+    label: "Quarterly grade",
+    help: "Numeric grade from 60 to 100. A grade below 75 is treated as below benchmark, matching the DepEd passing mark.",
+    numeric: true, cut: 75, min: 60, max: 100
+  }
+};
+function indicatorDef() { return INDICATORS[S.settings.indicator] || INDICATORS.reading; }
+function bandBelow(def, value) {
+  if (value == null || value === "") return null;
+  if (def.numeric) { const n = Number(value); return isFinite(n) ? n < def.cut : null; }
+  const b = def.bands.find(x => x.key === value);
+  return b ? b.below : null;
+}
+function bandLabel(def, value) {
+  if (value == null || value === "") return "—";
+  if (def.numeric) return String(value);
+  const b = def.bands.find(x => x.key === value);
+  return b ? b.label : String(value);
+}
+
+/* =====================================================================
+   Selectors over state
+   ===================================================================== */
+const classById   = id => S.classes.find(c => c.id === id) || null;
+const className   = c => c ? ("Grade " + c.grade + " — " + c.section) : "";
+const learnersOf  = cid => S.learners.filter(l => l.classId === cid);
+const learnerById = id => S.learners.find(l => l.id === id) || null;
+const measOf      = (lid, round) => S.measurements.find(m => m.learnerId === lid && m.round === round) || null;
+const learnOf     = (lid, q) => S.learning.find(x => x.learnerId === lid && x.quarter === q) || null;
+
+function learnerCode(l) {
+  const c = classById(l.classId);
+  const roster = learnersOf(l.classId);
+  const i = roster.findIndex(x => x.id === l.id);
+  const prefix = c ? ("G" + String(c.grade).replace(/\s+/g, "") + (c.section || "").slice(0, 2).toUpperCase()) : "L";
+  return prefix + "-" + String(i + 1).padStart(3, "0");
+}
+function nameOf(l) {
+  if (!l) return "—";
+  if (S.settings.anon) return learnerCode(l);
+  const mid = l.middle ? " " + l.middle.charAt(0).toUpperCase() + "." : "";
+  return (l.last || "") + ", " + (l.first || "") + mid;
+}
+function sortRoster(a, b) {
+  const s = (a.sex || "").localeCompare(b.sex || "");
+  if (s) return s === 0 ? 0 : (a.sex === "M" ? -1 : 1);
+  return ((a.last || "") + (a.first || "")).localeCompare((b.last || "") + (b.first || ""), "en", { sensitivity: "base" });
+}
+
+/** Full computed record for one learner in one round. */
+function compute(l, round) {
+  const m = measOf(l.id, round);
+  const out = {
+    learner: l, meas: m, ageM: null, bmi: null,
+    baz: null, bazCat: null, haz: null, hazCat: null,
+    problems: []
+  };
+  if (!m) { out.problems.push("not measured"); return out; }
+  out.ageM = WHO.ageMonths(l.birth, m.date);
+  if (out.ageM == null) { out.problems.push("birthdate or measurement date missing/invalid"); return out; }
+  if (m.height && m.weight) out.bmi = m.weight / Math.pow(m.height / 100, 2);
+  const bz = WHO.z("bfa", l.sex, out.ageM, out.bmi);
+  const hz = WHO.z("hfa", l.sex, out.ageM, m.height);
+  out.baz = bz.z; out.haz = hz.z;
+  out.bazCat = classify(BAZ_CATS, out.baz);
+  out.hazCat = classify(HAZ_CATS, out.haz);
+  if (bz.reason === "age-out-of-range" || hz.reason === "age-out-of-range")
+    out.problems.push("age " + out.ageM + " months is outside the WHO 5–19 reference (61–228 months)");
+  if (bz.reason === "no-reference") out.problems.push("WHO reference data not loaded");
+  plausible(m.height, m.weight).forEach(w => out.problems.push(w));
+  return out;
+}
+const isUnder = r => !!((r.bazCat && r.bazCat.under) || (r.hazCat && r.hazCat.under));
+
+function rowsFor(scope, round) {
+  const ls = (scope === "*" ? S.learners.slice() : learnersOf(scope)).sort(sortRoster);
+  return ls.map(l => compute(l, round));
+}
+
+/* =====================================================================
+   Small render helpers
+   ===================================================================== */
+const chipFor = cat => cat
+  ? '<span class="chip ' + cat.chip + '">' + esc(cat.label) + "</span>"
+  : '<span class="chip s-na">—</span>';
+
+function kpi(n, label, alert) {
+  return '<div class="kpi' + (alert ? " alert" : "") + '"><div class="n">' + n + '</div><div class="l">' + esc(label) + "</div></div>";
+}
+function barRow(label, value, total, colour) {
+  const w = total ? (100 * value / total) : 0;
+  return '<div class="bar"><span class="lab">' + esc(label) + '</span>' +
+    '<span class="track"><span class="fill" style="width:' + w.toFixed(1) + '%;background:' + colour + '"></span></span>' +
+    '<span class="val">' + value + " (" + w.toFixed(1) + "%)</span></div>";
+}
+const CATCOL = { SW: "#8e1b1b", W: "#d1691a", N: "#1f7a4d", OW: "#a8871a", OB: "#8a4f12",
+                 SS: "#8e1b1b", ST: "#d1691a", T: "#2f6ea8" };
+
+function fillSelect(sel, opts, value) {
+  if (!sel) return;
+  sel.innerHTML = opts.map(o => '<option value="' + esc(o.v) + '"' + (o.v === value ? " selected" : "") + ">" + esc(o.t) + "</option>").join("");
+}
+function classOptions(withAll) {
+  const o = S.classes.map(c => ({ v: c.id, t: className(c) }));
+  if (withAll && S.classes.length) o.unshift({ v: "*", t: "All classes (whole school)" });
+  return o.length ? o : [{ v: "", t: "— no class yet —" }];
+}
+
+/* CSV */
+function csvCell(v) {
+  const s = v == null ? "" : String(v);
+  return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+const toCSV = rows => rows.map(r => r.map(csvCell).join(",")).join("\r\n");
+function download(name, text, mime) {
+  const blob = new Blob(["﻿" + text], { type: (mime || "text/csv") + ";charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = el("a", { href: url, download: name });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+/* dialogs */
+function confirmDlg(title, body, okLabel) {
+  return new Promise(res => {
+    const d = $("#dlg"), f = $("#dlgForm");
+    f.innerHTML = "<h3>" + esc(title) + "</h3><p>" + body + '</p>' +
+      '<div class="row" style="justify-content:flex-end"><button value="no" class="sec">Cancel</button>' +
+      '<button value="yes" class="danger">' + esc(okLabel || "Confirm") + "</button></div>";
+    d.onclose = () => res(d.returnValue === "yes");
+    d.showModal();
+  });
+}
+
+/* =====================================================================
+   Tabs
+   ===================================================================== */
+const TABS = [
+  { id: "setup",    label: "Setup" },
+  { id: "roster",   label: "Roster" },
+  { id: "measure",  label: "Measure" },
+  { id: "learning", label: "Learning" },
+  { id: "analysis", label: "Analysis" },
+  { id: "reports",  label: "Reports" },
+  { id: "ref",      label: "Reference data" },
+  { id: "about",    label: "About" }
+];
+let current = "setup";
+function buildTabs() {
+  const nav = $("#tabs"); nav.innerHTML = "";
+  TABS.forEach(t => nav.appendChild(el("button", {
+    type: "button", "data-tab": t.id, text: t.label,
+    onclick: () => go(t.id)
+  })));
+}
+function go(id) {
+  current = id;
+  TABS.forEach(t => {
+    $("#v-" + t.id).hidden = t.id !== id;
+    const b = $('#tabs button[data-tab="' + t.id + '"]');
+    if (b) b.setAttribute("aria-current", String(t.id === id));
+  });
+  if (location.hash.slice(1) !== id) history.replaceState(null, "", "#" + id);
+  render();
+  try { window.scrollTo(0, 0); } catch (e) { /* non-visual host */ }
+}
+
+/* =====================================================================
+   Render dispatch
+   ===================================================================== */
+function render() {
+  renderHeader();
+  const fn = { setup: renderSetup, roster: renderRoster, measure: renderMeasure,
+               learning: renderLearning, analysis: renderAnalysis, reports: renderReports,
+               ref: renderRef, about: renderAbout }[current];
+  if (fn) fn();
+}
+
+function renderHeader() {
+  const p = $("#pillRef");
+  if (WHO.ready) { p.className = "pill"; p.textContent = "WHO 5–19 tables loaded"; }
+  else { p.className = "pill warn"; p.textContent = "no WHO reference data"; }
+  const c = classById(S.settings.classId);
+  $("#pillClass").textContent = c ? className(c) : (S.classes.length ? "select a class" : "no class");
+}
+
+/* ---------------- Setup ---------------- */
+function renderSetup() {
+  const s = S.school;
+  const map = { schName: "name", schId: "id", schDiv: "division", schRegion: "region", schDistrict: "district", schYear: "year" };
+  for (const k in map) if ($("#" + k) && document.activeElement !== $("#" + k)) $("#" + k).value = s[map[k]] || "";
+  $("#anonMode").checked = !!S.settings.anon;
+  const tb = $("#tblClasses tbody"); tb.innerHTML = "";
+  if (!S.classes.length) {
+    tb.innerHTML = '<tr><td colspan="5" class="empty">No classes yet. Add one above.</td></tr>';
+  } else S.classes.forEach(c => {
+    const tr = el("tr");
+    tr.innerHTML = "<td>" + esc(c.grade) + "</td><td>" + esc(c.section) + "</td><td>" + esc(c.adviser || "—") +
+      '</td><td class="num">' + learnersOf(c.id).length + "</td>";
+    const td = el("td");
+    td.appendChild(el("button", { class: "danger tiny", text: "Delete", onclick: async () => {
+      const n = learnersOf(c.id).length;
+      if (await confirmDlg("Delete class?", "<strong>" + esc(className(c)) + "</strong> and its <strong>" + n +
+        "</strong> learner record(s), measurements and learning entries will be permanently removed from this device.", "Delete class")) {
+        const ids = learnersOf(c.id).map(x => x.id);
+        S.classes = S.classes.filter(x => x.id !== c.id);
+        S.learners = S.learners.filter(x => x.classId !== c.id);
+        S.measurements = S.measurements.filter(x => !ids.includes(x.learnerId));
+        S.learning = S.learning.filter(x => !ids.includes(x.learnerId));
+        if (S.settings.classId === c.id) S.settings.classId = S.classes[0] ? S.classes[0].id : null;
+        save(); render(); toast("Class deleted");
+      }
+    } }));
+    tr.appendChild(td); tb.appendChild(tr);
+  });
+}
+
+/* ---------------- Roster ---------------- */
+function renderRoster() {
+  fillSelect($("#rosterClass"), classOptions(false), S.settings.classId);
+  const cid = S.settings.classId;
+  const rs = learnersOf(cid).sort(sortRoster);
+  $("#rosterCount").textContent = rs.length ? "(" + rs.length + " — " + rs.filter(x => x.sex === "M").length + " male, " + rs.filter(x => x.sex === "F").length + " female)" : "";
+  const tb = $("#tblRoster tbody"); tb.innerHTML = "";
+  if (!rs.length) { tb.innerHTML = '<tr><td colspan="7" class="empty">No learners in this class yet.</td></tr>'; return; }
+  const today = new Date().toISOString().slice(0, 10);
+  rs.forEach((l, i) => {
+    const am = WHO.ageMonths(l.birth, today);
+    const tr = el("tr");
+    tr.innerHTML = "<td>" + (i + 1) + "</td><td>" + esc(nameOf(l)) + "</td><td>" + (l.sex === "M" ? "M" : "F") +
+      "</td><td>" + esc(S.settings.anon ? "hidden" : (l.birth || "—")) + '</td><td class="num">' +
+      (am == null ? "—" : Math.floor(am / 12) + "y " + (am % 12) + "m") + '</td><td class="mono">' +
+      esc(S.settings.anon ? "hidden" : (l.lrn || "—")) + "</td>";
+    const td = el("td");
+    td.appendChild(el("button", { class: "danger tiny", text: "Remove", onclick: async () => {
+      if (await confirmDlg("Remove learner?", "All measurements and learning entries for <strong>" + esc(nameOf(l)) + "</strong> will be deleted.", "Remove")) {
+        S.learners = S.learners.filter(x => x.id !== l.id);
+        S.measurements = S.measurements.filter(x => x.learnerId !== l.id);
+        S.learning = S.learning.filter(x => x.learnerId !== l.id);
+        save(); render(); toast("Learner removed");
+      }
+    } }));
+    tr.appendChild(td); tb.appendChild(tr);
+  });
+}
+
+/* ---------------- Measure ---------------- */
+let queueIdx = 0;
+function measQueue() { return learnersOf(S.settings.classId).sort(sortRoster); }
+
+function renderMeasure() {
+  fillSelect($("#measClass"), classOptions(false), S.settings.classId);
+  $("#measRound").value = S.settings.round;
+  if (!S.settings.measDate) S.settings.measDate = new Date().toISOString().slice(0, 10);
+  $("#measDate").value = S.settings.measDate;
+
+  const q = measQueue();
+  if (queueIdx >= q.length) queueIdx = Math.max(0, q.length - 1);
+  const l = q[queueIdx];
+
+  if (!l) {
+    $("#measName").textContent = "—";
+    $("#measMeta").textContent = S.classes.length ? "This class has no learners. Add them in the Roster tab." : "Create a class in Setup first.";
+    $("#livePreview").innerHTML = ""; $("#measProgress").textContent = "";
+    $("#inHeight").value = ""; $("#inWeight").value = "";
+    ["btnPrev", "btnSaveNext", "btnSkip"].forEach(b => $("#" + b).disabled = true);
+    renderMeasTable(); return;
+  }
+  ["btnPrev", "btnSaveNext", "btnSkip"].forEach(b => $("#" + b).disabled = false);
+
+  const existing = measOf(l.id, S.settings.round);
+  const am = WHO.ageMonths(l.birth, S.settings.measDate);
+  $("#measName").textContent = nameOf(l);
+  $("#measMeta").innerHTML = (l.sex === "M" ? "Male" : "Female") + " · " +
+    (am == null ? '<span class="err">birthdate missing</span>' : Math.floor(am / 12) + "y " + (am % 12) + "m (" + am + " months)") +
+    (existing ? ' · <span class="chip s-norm">already recorded — editing</span>' : "");
+  $("#inHeight").value = existing ? existing.height : "";
+  $("#inWeight").value = existing ? existing.weight : "";
+  const done = measQueue().filter(x => measOf(x.id, S.settings.round)).length;
+  $("#measProgress").textContent = "Learner " + (queueIdx + 1) + " of " + q.length + " · " + done + " measured this round";
+  livePreview();
+  renderMeasTable();
+}
+
+function livePreview() {
+  const q = measQueue(), l = q[queueIdx];
+  const box = $("#livePreview");
+  if (!l) { box.innerHTML = ""; return; }
+  const h = parseFloat($("#inHeight").value), w = parseFloat($("#inWeight").value);
+  if (!isFinite(h) || !isFinite(w)) { box.innerHTML = '<p class="muted"><small>Enter height and weight to see the classification.</small></p>'; return; }
+  const am = WHO.ageMonths(l.birth, S.settings.measDate);
+  const bmi = w / Math.pow(h / 100, 2);
+  const bz = WHO.z("bfa", l.sex, am, bmi), hz = WHO.z("hfa", l.sex, am, h);
+  const bc = classify(BAZ_CATS, bz.z), hc = classify(HAZ_CATS, hz.z);
+  const warns = plausible(h, w);
+  if (bz.reason === "age-out-of-range") warns.push("age is outside the WHO 5–19 reference");
+  if (bz.reason === "no-reference") warns.push("WHO reference data not loaded — no classification possible");
+  box.innerHTML =
+    '<div class="grid c4" style="margin-top:.25rem">' +
+      kpi(r1(bmi).toFixed(1), "BMI kg/m²") +
+      kpi(fmtZ(bz.z), "BMI-for-age z") +
+      kpi(fmtZ(hz.z), "Height-for-age z") +
+      '<div class="kpi"><div class="n" style="font-size:.95rem;padding-top:.35rem">' + chipFor(bc) + "<br>" + chipFor(hc) + '</div><div class="l">status</div></div>' +
+    "</div>" +
+    (warns.length ? '<div class="note warn" style="margin-top:.7rem"><strong>Check before saving:</strong><ul class="tight">' +
+      warns.map(x => "<li>" + esc(x) + "</li>").join("") + "</ul></div>" : "");
+}
+
+function renderMeasTable() {
+  const tb = $("#tblMeas tbody"); tb.innerHTML = "";
+  const rows = rowsFor(S.settings.classId || "", S.settings.round).filter(r => r.meas);
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="10" class="empty">Nothing recorded for this round yet.</td></tr>'; return; }
+  rows.forEach(r => {
+    const tr = el("tr", { class: isUnder(r) ? "flag" : "" });
+    tr.innerHTML = "<td>" + esc(nameOf(r.learner)) + '</td><td class="num">' + (r.ageM == null ? "—" : r.ageM) +
+      '</td><td class="num">' + r1(r.meas.height) + '</td><td class="num">' + r1(r.meas.weight) +
+      '</td><td class="num">' + (r.bmi ? r.bmi.toFixed(1) : "—") + '</td><td class="num">' + fmtZ(r.baz) +
+      "</td><td>" + chipFor(r.bazCat) + '</td><td class="num">' + fmtZ(r.haz) + "</td><td>" + chipFor(r.hazCat) + "</td>";
+    const td = el("td");
+    td.appendChild(el("button", { class: "ghost tiny", text: "Edit", onclick: () => {
+      queueIdx = measQueue().findIndex(x => x.id === r.learner.id); renderMeasure();
+      try { window.scrollTo(0, 0); } catch (e) {}
+    } }));
+    tr.appendChild(td); tb.appendChild(tr);
+  });
+}
+
+function saveCurrentMeasurement() {
+  const q = measQueue(), l = q[queueIdx];
+  if (!l) return false;
+  const h = parseFloat($("#inHeight").value), w = parseFloat($("#inWeight").value);
+  if (!isFinite(h) || !isFinite(w)) { toast("Enter both height and weight, or press Skip"); return false; }
+  if (h <= 0 || w <= 0) { toast("Height and weight must be greater than zero"); return false; }
+  const ex = measOf(l.id, S.settings.round);
+  const rec = { id: ex ? ex.id : uid(), learnerId: l.id, round: S.settings.round,
+                date: S.settings.measDate, height: r1(h), weight: r1(w) };
+  if (ex) Object.assign(ex, rec); else S.measurements.push(rec);
+  save();
+  return true;
+}
+
+/* ---------------- Learning ---------------- */
+function renderLearning() {
+  fillSelect($("#lrnClass"), classOptions(false), S.settings.classId);
+  $("#lrnQuarter").value = S.settings.quarter;
+  $("#lrnType").value = S.settings.indicator;
+  const def = indicatorDef();
+  $("#lrnBandHelp").textContent = def.help;
+
+  const tb = $("#tblLearning tbody"); tb.innerHTML = "";
+  const rows = rowsFor(S.settings.classId || "", S.settings.round);
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="4" class="empty">No learners in this class.</td></tr>'; return; }
+
+  rows.forEach(r => {
+    const l = r.learner;
+    const rec = learnOf(l.id, S.settings.quarter);
+    const val = rec && rec.type === S.settings.indicator ? rec.value : "";
+    const tr = el("tr");
+    tr.appendChild(el("td", { text: nameOf(l) }));
+    tr.appendChild(el("td", { html: chipFor(r.bazCat) + " " + chipFor(r.hazCat) }));
+
+    const tdIn = el("td");
+    let input;
+    if (def.numeric) {
+      input = el("input", { type: "number", inputmode: "decimal", min: def.min, max: def.max, step: "0.01", value: val, placeholder: "grade" });
+    } else {
+      input = el("select");
+      input.appendChild(el("option", { value: "", text: "— not entered —" }));
+      def.bands.forEach(b => input.appendChild(el("option", { value: b.key, text: b.label, selected: b.key === val })));
+    }
+    const benchTd = el("td");
+    const paint = () => {
+      const below = bandBelow(def, input.value);
+      benchTd.innerHTML = below == null ? '<span class="chip s-na">—</span>'
+        : below ? '<span class="chip s-wast">Below benchmark</span>' : '<span class="chip s-norm">At / above</span>';
+      tr.className = (below && isUnder(r)) ? "flag" : "";
+    };
+    input.addEventListener("change", () => {
+      const v = input.value;
+      const ex = S.learning.find(x => x.learnerId === l.id && x.quarter === S.settings.quarter);
+      if (v === "") { S.learning = S.learning.filter(x => x !== ex); }
+      else if (ex) { ex.value = v; ex.type = S.settings.indicator; }
+      else S.learning.push({ id: uid(), learnerId: l.id, quarter: S.settings.quarter, type: S.settings.indicator, value: v });
+      save(); paint();
+    });
+    tdIn.appendChild(input); tr.appendChild(tdIn);
+    tr.appendChild(benchTd); paint();
+    tb.appendChild(tr);
+  });
+}
+
+/* ---------------- Analysis ---------------- */
+function renderAnalysis() {
+  fillSelect($("#anClass"), classOptions(true), S.settings.anScope || S.settings.classId);
+  $("#anRound").value = S.settings.round;
+  $("#anQuarter").value = S.settings.quarter;
+  const scope = $("#anClass").value;
+  const out = $("#anOut");
+
+  if (!WHO.ready) {
+    out.innerHTML = '<div class="card"><div class="note stop"><p><strong>No WHO reference data loaded.</strong> ' +
+      'SIBOL will not classify or analyse anyone until the official WHO 5–19 LMS tables are loaded. Open the Reference data tab.</p></div></div>';
+    return;
+  }
+  const rows = rowsFor(scope, S.settings.round);
+  const measured = rows.filter(r => r.meas && r.baz != null);
+  if (!measured.length) {
+    out.innerHTML = '<div class="card"><div class="empty">No usable measurements in this scope and round yet.</div></div>';
+    return;
+  }
+  const def = indicatorDef();
+  let html = "";
+
+  /* --- distribution --- */
+  const n = measured.length;
+  const bazCount = {}, hazCount = {};
+  BAZ_CATS.forEach(c => bazCount[c.key] = 0);
+  HAZ_CATS.forEach(c => hazCount[c.key] = 0);
+  measured.forEach(r => { if (r.bazCat) bazCount[r.bazCat.key]++; if (r.hazCat) hazCount[r.hazCat.key]++; });
+  const wasted = bazCount.SW + bazCount.W, stunted = hazCount.SS + hazCount.ST;
+  const und = measured.filter(isUnder).length;
+  const [lo, hi] = Stats.wilson(und, n);
+
+  html += '<div class="card"><h2>Nutritional status — ' + esc(scope === "*" ? "whole school" : className(classById(scope))) +
+    ", " + esc(S.settings.round) + '</h2>' +
+    '<div class="grid c4" style="margin-bottom:1rem">' +
+      kpi(n, "learners measured") +
+      kpi(wasted + " (" + pct(wasted, n).toFixed(1) + "%)", "wasted or severely wasted", wasted > 0) +
+      kpi(stunted + " (" + pct(stunted, n).toFixed(1) + "%)", "stunted or severely stunted", stunted > 0) +
+      kpi(bazCount.OW + bazCount.OB, "overweight or obese") +
+    "</div>" +
+    "<h3>BMI-for-age</h3>" +
+    BAZ_CATS.map(c => barRow(c.label, bazCount[c.key], n, CATCOL[c.key])).join("") +
+    '<h3 style="margin-top:.9rem">Height-for-age</h3>' +
+    HAZ_CATS.map(c => barRow(c.label, hazCount[c.key], n, CATCOL[c.key])).join("") +
+    '<p style="margin-top:.8rem"><small>Undernourished on either indicator: <strong>' + und + " of " + n + "</strong> (" +
+      pct(und, n).toFixed(1) + "%, 95% CI " + (100 * lo).toFixed(1) + "–" + (100 * hi).toFixed(1) + "%).</small></p>" +
+    "</div>";
+
+  /* --- cross analysis --- */
+  const paired = measured.map(r => {
+    const rec = learnOf(r.learner.id, S.settings.quarter);
+    const val = rec && rec.type === S.settings.indicator ? rec.value : null;
+    return { r, below: bandBelow(def, val), val };
+  }).filter(x => x.below !== null);
+
+  html += '<div class="card"><h2>Nutrition &times; learning</h2>' +
+    "<p class='muted'>" + esc(def.label) + ", " + esc(S.settings.quarter) + " · " + paired.length +
+    " of " + n + " measured learners also have a learning entry.</p>";
+
+  if (paired.length < 10) {
+    html += '<div class="note warn"><p>Only <strong>' + paired.length + '</strong> learners have both a measurement and a learning entry. ' +
+      'Enter more in the Learning tab — a cross-tabulation on fewer than about 20 learners will not support any conclusion.</p></div>';
+  }
+
+  if (paired.length) {
+    const a = paired.filter(x =>  isUnder(x.r) &&  x.below).length;  // undernourished & below
+    const b = paired.filter(x =>  isUnder(x.r) && !x.below).length;
+    const c = paired.filter(x => !isUnder(x.r) &&  x.below).length;
+    const d = paired.filter(x => !isUnder(x.r) && !x.below).length;
+    const res = Stats.chiSquare([[a, b], [c, d]]);
+    const rowU = a + b, rowN = c + d, tot = a + b + c + d;
+
+    html += '<div class="tw"><table><thead><tr><th></th><th class="num">Below benchmark</th><th class="num">At / above</th><th class="num">Total</th><th class="num">% below</th></tr></thead><tbody>' +
+      '<tr class="flag"><th>Undernourished</th><td class="num">' + a + '</td><td class="num">' + b + '</td><td class="num">' + rowU + '</td><td class="num">' + pct(a, rowU).toFixed(1) + "%</td></tr>" +
+      '<tr><th>Not undernourished</th><td class="num">' + c + '</td><td class="num">' + d + '</td><td class="num">' + rowN + '</td><td class="num">' + pct(c, rowN).toFixed(1) + "%</td></tr>" +
+      '<tr><th>Total</th><td class="num">' + (a + c) + '</td><td class="num">' + (b + d) + '</td><td class="num">' + tot + '</td><td class="num">' + pct(a + c, tot).toFixed(1) + "%</td></tr>" +
+      "</tbody></table></div>";
+
+    if (res.ok) {
+      const rr = (rowU && rowN && c > 0) ? (a / rowU) / (c / rowN) : null;
+      html += "<p style='margin-top:.7rem'><strong>χ² = " + res.chi2.toFixed(3) + "</strong>, df = " + res.df +
+        ", " + Stats.fmtP(res.p) + " · Cramér's V = " + (isFinite(res.cramersV) ? res.cramersV.toFixed(3) : "—") +
+        (res.yates ? " · Yates' continuity correction applied" : "") + "</p>";
+      if (rr) html += "<p>Undernourished learners are <strong>" + rr.toFixed(2) + "×</strong> as likely to be below the learning benchmark as their well-nourished classmates.</p>";
+      if (!res.reliable) {
+        html += '<div class="note warn"><p><strong>Treat this test as indicative only.</strong> The smallest expected cell count is ' +
+          res.minExp.toFixed(2) + ' (' + res.pctSmall.toFixed(0) + '% of cells below 5). The chi-square approximation is unreliable here; a Fisher exact test on the same table would be the correct choice, and more learners would be better still.</p></div>';
+      } else if (res.p < 0.05) {
+        html += '<div class="note"><p><strong>The association is statistically significant at the 5% level.</strong> This is an association, not a cause. ' +
+          'It means the undernourished learners in this group are disproportionately the ones falling behind — which is enough to justify targeting them, and not enough to claim malnutrition caused it.</p></div>';
+      } else {
+        html += '<div class="note"><p>No statistically significant association was detected in this group. With small class sizes this is common even where a real association exists; it is not evidence that nutrition and learning are unrelated.</p></div>';
+      }
+    }
+
+    /* double-burden list */
+    const dbl = paired.filter(x => isUnder(x.r) && x.below).map(x => x.r);
+    html += '<h3 style="margin-top:1.2rem">Double-burden priority list <span class="muted">(' + dbl.length + ")</span></h3>" +
+      "<p class='muted'>Named learners who are undernourished <em>and</em> below the learning benchmark. This is the intervention target.</p>";
+    html += dbl.length ? tableOfRows(dbl, true) : '<div class="empty">No learner in this scope is currently in both groups.</div>';
+  }
+  html += "</div>";
+
+  /* --- baseline vs endline --- */
+  html += movementBlock(scope);
+  out.innerHTML = html;
+}
+
+function tableOfRows(rows, withLearning) {
+  const def = indicatorDef();
+  let h = '<div class="tw"><table><thead><tr><th>Name</th><th>Sex</th><th class="num">Age</th><th class="num">BAZ</th><th>Nutritional status</th><th class="num">HAZ</th><th>Height status</th>' +
+    (withLearning ? "<th>Learning</th>" : "") + "</tr></thead><tbody>";
+  rows.forEach(r => {
+    const rec = learnOf(r.learner.id, S.settings.quarter);
+    const val = rec && rec.type === S.settings.indicator ? rec.value : null;
+    h += '<tr class="flag"><td>' + esc(nameOf(r.learner)) + "</td><td>" + (r.learner.sex === "M" ? "M" : "F") +
+      '</td><td class="num">' + (r.ageM == null ? "—" : Math.floor(r.ageM / 12) + "y" + (r.ageM % 12) + "m") +
+      '</td><td class="num">' + fmtZ(r.baz) + "</td><td>" + chipFor(r.bazCat) +
+      '</td><td class="num">' + fmtZ(r.haz) + "</td><td>" + chipFor(r.hazCat) + "</td>" +
+      (withLearning ? "<td>" + esc(bandLabel(def, val)) + "</td>" : "") + "</tr>";
+  });
+  return h + "</tbody></table></div>";
+}
+
+function movementBlock(scope) {
+  const base = rowsFor(scope, "baseline").filter(r => r.baz != null);
+  const end  = rowsFor(scope, "endline").filter(r => r.baz != null);
+  const endMap = {}; end.forEach(r => endMap[r.learner.id] = r);
+  const pairs = base.map(r => ({ b: r, e: endMap[r.learner.id] })).filter(x => x.e);
+
+  let h = '<div class="card"><h2>Baseline vs endline</h2>';
+  if (!pairs.length) {
+    return h + '<div class="empty">No learner yet has both a baseline and an endline measurement in this scope.</div></div>';
+  }
+  const wasBad = x => x.b.bazCat && x.b.bazCat.under;
+  const isBad  = x => x.e.bazCat && x.e.bazCat.under;
+  const startedBad = pairs.filter(wasBad);
+  const recovered  = startedBad.filter(x => !isBad(x));
+  const b = pairs.filter(x =>  wasBad(x) && !isBad(x)).length;   // improved
+  const c = pairs.filter(x => !wasBad(x) &&  isBad(x)).length;   // deteriorated
+  const mn = Stats.mcNemar(b, c);
+  const rate = pct(recovered.length, startedBad.length);
+
+  h += '<div class="grid c4" style="margin-bottom:1rem">' +
+    kpi(pairs.length, "learners with both rounds") +
+    kpi(startedBad.length, "undernourished at baseline") +
+    kpi(recovered.length, "moved to normal") +
+    kpi(startedBad.length ? rate.toFixed(1) + "%" : "—", "recovery rate", startedBad.length ? rate < 70 : false) +
+  "</div>";
+
+  if (startedBad.length) {
+    const [lo, hi] = Stats.wilson(recovered.length, startedBad.length);
+    h += "<p>" + (rate >= 70
+      ? "<strong>The 70% SBFP success criterion is met</strong> for this group"
+      : "<strong>The 70% SBFP success criterion is not met</strong> for this group") +
+      " — " + recovered.length + " of " + startedBad.length + " (" + rate.toFixed(1) +
+      "%, 95% CI " + (100 * lo).toFixed(1) + "–" + (100 * hi).toFixed(1) + "%) of learners who were wasted or stunted at baseline are classified normal at endline.</p>";
+  }
+  h += "<p><small>Status change across the two rounds — McNemar's test on discordant pairs: " +
+    b + " improved, " + c + " deteriorated" +
+    (mn.ok ? ". χ² = " + mn.chi2.toFixed(3) + ", df = 1, " + Stats.fmtP(mn.p) +
+      (mn.exact ? " — with only " + mn.n + " discordant pairs an exact binomial test would be more appropriate." : "")
+      : ". No learner changed status, so no test is possible.") + "</small></p>";
+
+  /* deteriorated list */
+  const worse = pairs.filter(x => !wasBad(x) && isBad(x));
+  if (worse.length) {
+    h += '<h3 style="margin-top:1rem">Deteriorated since baseline <span class="muted">(' + worse.length + ")</span></h3>" +
+      '<div class="tw"><table><thead><tr><th>Name</th><th class="num">BAZ base</th><th>Baseline</th><th class="num">BAZ end</th><th>Endline</th><th class="num">Δ BAZ</th></tr></thead><tbody>' +
+      worse.map(x => '<tr class="flag"><td>' + esc(nameOf(x.b.learner)) + '</td><td class="num">' + fmtZ(x.b.baz) +
+        "</td><td>" + chipFor(x.b.bazCat) + '</td><td class="num">' + fmtZ(x.e.baz) + "</td><td>" + chipFor(x.e.bazCat) +
+        '</td><td class="num">' + fmtZ(x.e.baz - x.b.baz) + "</td></tr>").join("") +
+      "</tbody></table></div>";
+  }
+  return h + "</div>";
+}
+
+/* ---------------- Reports ---------------- */
+function reportHeader(scope) {
+  const s = S.school, c = scope === "*" ? null : classById(scope);
+  return '<div class="printonly" style="margin-bottom:10pt">' +
+    "<div style='font-size:12pt;font-weight:700'>" + esc(s.name || "(school name not set)") + "</div>" +
+    "<div style='font-size:9pt'>" +
+      [s.division && "Division of " + s.division, s.district, s.region, s.id && "School ID " + s.id]
+        .filter(Boolean).map(esc).join(" · ") + "</div>" +
+    "<div style='font-size:9pt'>" + esc(c ? className(c) + (c.adviser ? " · Adviser: " + c.adviser : "") : "All classes") +
+      " · SY " + esc(s.year || "—") + " · " + esc(S.settings.round) + " · printed " + new Date().toISOString().slice(0, 10) + "</div>" +
+    "</div>";
+}
+
+function renderReports() {
+  fillSelect($("#rpClass"), classOptions(true), S.settings.rpScope || S.settings.classId);
+  const scope = $("#rpClass").value;
+  const kind = $("#rpKind").value;
+  const out = $("#rpOut");
+
+  if (!WHO.ready) {
+    out.innerHTML = '<div class="card"><div class="note stop"><p><strong>No WHO reference data loaded.</strong> Reports depend on classification, which SIBOL will not perform without the official WHO tables. Open the Reference data tab.</p></div></div>';
+    return;
+  }
+  const rows = rowsFor(scope, S.settings.round);
+  const measured = rows.filter(r => r.meas && r.baz != null);
+  const def = indicatorDef();
+  let h = '<div class="card">' + reportHeader(scope);
+
+  if (kind === "sf8") {
+    h += "<h2>School Form 8 — Learner's Nutritional Status Report</h2>" +
+      "<p class='muted'>" + esc(S.settings.round) + " · " + measured.length + " learners with a valid measurement</p>";
+    const groups = scope === "*" ? S.classes.map(c => ({ key: c.id, label: className(c) })) : [{ key: scope, label: className(classById(scope)) }];
+    const mk = (cats, title, pick) => {
+      let t = "<h3 style='margin-top:1rem'>" + title + "</h3><div class='tw'><table><thead><tr><th>Class</th><th>Sex</th>" +
+        cats.map(c => '<th class="num">' + esc(c.label) + "</th>").join("") + '<th class="num">Total</th></tr></thead><tbody>';
+      const totals = {}; cats.forEach(c => totals[c.key] = 0);
+      groups.forEach(g => {
+        ["M", "F"].forEach(sex => {
+          const set = measured.filter(r => r.learner.classId === g.key && r.learner.sex === sex);
+          if (!set.length) return;
+          const cnt = {}; cats.forEach(c => cnt[c.key] = 0);
+          set.forEach(r => { const cat = pick(r); if (cat) { cnt[cat.key]++; totals[cat.key]++; } });
+          t += "<tr><td>" + esc(g.label) + "</td><td>" + (sex === "M" ? "Male" : "Female") + "</td>" +
+            cats.map(c => '<td class="num">' + cnt[c.key] + "</td>").join("") + '<td class="num">' + set.length + "</td></tr>";
+        });
+      });
+      const gt = cats.reduce((a, c) => a + totals[c.key], 0);
+      t += "<tr style='font-weight:700'><td colspan='2'>TOTAL</td>" +
+        cats.map(c => '<td class="num">' + totals[c.key] + "</td>").join("") + '<td class="num">' + gt + "</td></tr>";
+      t += "<tr><td colspan='2'>Percent</td>" +
+        cats.map(c => '<td class="num">' + pct(totals[c.key], gt).toFixed(1) + "%</td>").join("") + '<td class="num">100%</td></tr>';
+      return t + "</tbody></table></div>";
+    };
+    h += mk(BAZ_CATS, "Nutritional status (BMI-for-age)", r => r.bazCat);
+    h += mk(HAZ_CATS, "Height-for-age", r => r.hazCat);
+    h += "<p style='margin-top:1.5rem'><small>Prepared by: ______________________ &nbsp;&nbsp; Class adviser &nbsp;&nbsp;&nbsp; Noted by: ______________________ &nbsp;&nbsp; School head</small></p>";
+
+  } else if (kind === "sbfp") {
+    const list = measured.filter(r => r.bazCat && (r.bazCat.key === "SW" || r.bazCat.key === "W"))
+      .sort((a, b) => a.baz - b.baz);
+    h += "<h2>School-Based Feeding Program — beneficiary shortlist</h2>" +
+      "<p class='muted'>Wasted and severely wasted learners, worst first. " + list.length + " learner(s).</p>";
+    h += list.length ? tableOfRows(list, false) : '<div class="empty">No wasted learners in this scope. Nothing to shortlist.</div>';
+    if (list.length) h += "<p style='margin-top:1rem'><small>Severely wasted learners should also appear on the referral list and be seen by a health professional, not fed and forgotten.</small></p>";
+
+  } else if (kind === "double") {
+    const list = measured.filter(r => {
+      const rec = learnOf(r.learner.id, S.settings.quarter);
+      const val = rec && rec.type === S.settings.indicator ? rec.value : null;
+      return isUnder(r) && bandBelow(def, val) === true;
+    }).sort((a, b) => a.baz - b.baz);
+    h += "<h2>Double-burden priority list</h2>" +
+      "<p class='muted'>Undernourished <em>and</em> below the " + esc(def.label.toLowerCase()) + " benchmark, " + esc(S.settings.quarter) + ". " + list.length + " learner(s).</p>";
+    h += list.length ? tableOfRows(list, true) : '<div class="empty">No learner is currently in both groups — or the learning indicator has not been entered yet.</div>';
+
+  } else if (kind === "referral") {
+    const list = measured.filter(r =>
+      (r.bazCat && (r.bazCat.key === "SW" || r.bazCat.key === "OB")) || (r.hazCat && r.hazCat.key === "SS")
+    ).sort((a, b) => a.baz - b.baz);
+    h += "<h2>Referral list — cases for a health professional</h2>" +
+      "<p class='muted'>Severely wasted, severely stunted, or obese. " + list.length + " learner(s).</p>";
+    h += '<div class="note stop"><p>SIBOL does not diagnose. These learners need assessment by a rural health unit, school nurse or physician. Severe wasting in particular can indicate an acute medical problem and should be acted on this week, not this quarter.</p></div>';
+    h += list.length ? tableOfRows(list, false) : '<div class="empty">No severe cases in this scope.</div>';
+
+  } else if (kind === "movement") {
+    h += "</div>" + movementBlock(scope); out.innerHTML = h; return;
+
+  } else if (kind === "class") {
+    h += "<h2>Class nutritional summary</h2>";
+    if (!measured.length) h += '<div class="empty">Nothing measured in this scope and round.</div>';
+    else {
+      h += '<div class="tw"><table><thead><tr><th>#</th><th>Name</th><th>Sex</th><th class="num">Age</th><th class="num">Ht (cm)</th><th class="num">Wt (kg)</th><th class="num">BMI</th><th class="num">BAZ</th><th>Nutritional status</th><th class="num">HAZ</th><th>Height status</th><th>Learning</th></tr></thead><tbody>' +
+        measured.map((r, i) => {
+          const rec = learnOf(r.learner.id, S.settings.quarter);
+          const val = rec && rec.type === S.settings.indicator ? rec.value : null;
+          return "<tr" + (isUnder(r) ? ' class="flag"' : "") + "><td>" + (i + 1) + "</td><td>" + esc(nameOf(r.learner)) +
+            "</td><td>" + (r.learner.sex === "M" ? "M" : "F") + '</td><td class="num">' +
+            (r.ageM == null ? "—" : Math.floor(r.ageM / 12) + "y" + (r.ageM % 12) + "m") +
+            '</td><td class="num">' + r1(r.meas.height) + '</td><td class="num">' + r1(r.meas.weight) +
+            '</td><td class="num">' + r.bmi.toFixed(1) + '</td><td class="num">' + fmtZ(r.baz) + "</td><td>" + chipFor(r.bazCat) +
+            '</td><td class="num">' + fmtZ(r.haz) + "</td><td>" + chipFor(r.hazCat) + "</td><td>" + esc(bandLabel(def, val)) + "</td></tr>";
+        }).join("") + "</tbody></table></div>";
+    }
+  }
+  out.innerHTML = h + "</div>";
+}
+
+function reportCSV() {
+  const scope = $("#rpClass").value, kind = $("#rpKind").value, def = indicatorDef();
+  const rows = rowsFor(scope, S.settings.round).filter(r => r.meas && r.baz != null);
+  const head = ["class", "code_or_name", "sex", "birthdate", "measured_on", "age_months",
+    "height_cm", "weight_kg", "bmi", "baz", "nutritional_status", "haz", "height_status",
+    "quarter", "learning_indicator", "learning_value", "below_benchmark", "double_burden"];
+  const body = rows.map(r => {
+    const l = r.learner, c = classById(l.classId);
+    const rec = learnOf(l.id, S.settings.quarter);
+    const val = rec && rec.type === S.settings.indicator ? rec.value : "";
+    const below = bandBelow(def, val);
+    return [
+      className(c), nameOf(l), l.sex, S.settings.anon ? "" : l.birth, r.meas.date, r.ageM,
+      r1(r.meas.height), r1(r.meas.weight), r2(r.bmi), r2(r.baz),
+      r.bazCat ? r.bazCat.label : "", r2(r.haz), r.hazCat ? r.hazCat.label : "",
+      S.settings.quarter, def.label, bandLabel(def, val),
+      below == null ? "" : (below ? "yes" : "no"),
+      (isUnder(r) && below === true) ? "yes" : "no"
+    ];
+  });
+  const name = "sibol-" + kind + "-" + S.settings.round + "-" + new Date().toISOString().slice(0, 10) + ".csv";
+  download(name, toCSV([head].concat(body)));
+  toast("CSV downloaded (" + body.length + " rows)");
+}
+
+/* ---------------- Reference data ---------------- */
+function renderRef() {
+  const box = $("#refStatus");
+  if (WHO.ready) {
+    const m = WHO.data.meta || {};
+    const months = Object.keys(WHO.data.bfa.M).map(Number);
+    box.innerHTML = '<div class="note"><p><strong>WHO 5–19 reference tables loaded.</strong> ' +
+      "Source: " + esc(WHO.source) + ". " +
+      "BMI-for-age and height-for-age, both sexes, ages " + Math.min.apply(null, months) + "–" + Math.max.apply(null, months) + " completed months." +
+      (m.source ? "<br>Declared origin: " + esc(m.source) : "") +
+      (m.generated ? "<br>Generated: " + esc(m.generated) : "") +
+      (m.builder ? " by " + esc(m.builder) : "") + "</p></div>";
+  } else {
+    box.innerHTML = '<div class="note stop"><p><strong>No reference data loaded — SIBOL cannot classify anyone.</strong> ' +
+      "Measurements can still be entered and stored; they simply will not be given a nutritional status until the WHO tables are present.</p></div>";
+  }
+}
+
+async function loadWHO() {
+  // 1. baked into this file by the build script
+  try {
+    const inline = JSON.parse($("#who-lms-data").textContent || "null");
+    if (inline && !WHO.validate(inline)) { WHO.data = inline; WHO.source = "embedded in index.html"; return; }
+  } catch (e) { /* ignore */ }
+  // 2. previously loaded on this device
+  const stored = await DB.get("who-lms");
+  if (stored && !WHO.validate(stored)) { WHO.data = stored; WHO.source = "stored on this device"; return; }
+  // 3. sitting beside index.html
+  try {
+    const res = await fetch("who-lms.json", { cache: "no-cache" });
+    if (res.ok) {
+      const j = await res.json();
+      const bad = WHO.validate(j);
+      if (!bad) { WHO.data = j; WHO.source = "who-lms.json"; await DB.set("who-lms", j); return; }
+      console.warn("who-lms.json rejected:", bad);
+    }
+  } catch (e) { /* offline or absent — fine */ }
+}
+
+async function acceptWHOFile(file) {
+  try {
+    const j = JSON.parse(await file.text());
+    const bad = WHO.validate(j);
+    if (bad) { toast("Rejected: " + bad); return; }
+    WHO.data = j; WHO.source = "loaded from " + file.name;
+    await DB.set("who-lms", j);
+    toast("WHO reference tables loaded and stored");
+    render();
+  } catch (e) { toast("Could not read that file: " + e.message); }
+}
+
+/* ---------------- About ---------------- */
+async function renderAbout() {
+  $("#appVer").textContent = APP.version;
+  let info = "IndexedDB";
+  try { await DB.open(); } catch (e) { info = "localStorage fallback"; }
+  if (navigator.storage && navigator.storage.estimate) {
+    try {
+      const e = await navigator.storage.estimate();
+      if (e.usage != null) info += " · " + (e.usage / 1024).toFixed(0) + " KB used";
+    } catch (_) {}
+  }
+  $("#storeInfo").textContent = info;
+}
+
+/* =====================================================================
+   Roster CSV import / export
+   ===================================================================== */
+function parseCSV(text) {
+  const rows = []; let row = [], cur = "", q = false;
+  text = text.replace(/^﻿/, "");
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) {
+      if (ch === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+      else cur += ch;
+    } else if (ch === '"') q = true;
+    else if (ch === ",") { row.push(cur); cur = ""; }
+    else if (ch === "\n") { row.push(cur); rows.push(row); row = []; cur = ""; }
+    else if (ch !== "\r") cur += ch;
+  }
+  if (cur !== "" || row.length) { row.push(cur); rows.push(row); }
+  return rows.filter(r => r.some(c => String(c).trim() !== ""));
+}
+
+function importRosterDialog() {
+  if (!S.settings.classId) { toast("Create and select a class first"); return; }
+  const d = $("#dlg"), f = $("#dlgForm");
+  f.innerHTML =
+    "<h3>Import roster from CSV</h3>" +
+    "<p>The file needs a header row. SIBOL looks for these column names, in any order and in any letter case:</p>" +
+    "<p class='mono' style='background:#f8fbfa;padding:.5rem;border-radius:6px;font-size:.8rem'>last_name, first_name, middle_name, sex, birthdate, lrn</p>" +
+    "<p><small><strong>sex</strong> accepts M / F / Male / Female. <strong>birthdate</strong> must be YYYY-MM-DD. " +
+    "Rows missing a last name or a birthdate are skipped and reported.</small></p>" +
+    "<p><input type='file' id='rosterFile' accept='.csv,text/csv'></p>" +
+    "<div class='row' style='justify-content:flex-end'><button value='no' class='sec'>Cancel</button></div>";
+  d.showModal();
+  $("#rosterFile").addEventListener("change", async ev => {
+    const file = ev.target.files[0]; if (!file) return;
+    const rows = parseCSV(await file.text());
+    if (rows.length < 2) { toast("That file has no data rows"); d.close(); return; }
+    const head = rows[0].map(x => x.trim().toLowerCase().replace(/[\s-]+/g, "_"));
+    const idx = n => head.indexOf(n);
+    const cLast = idx("last_name") >= 0 ? idx("last_name") : idx("lastname");
+    const cFirst = idx("first_name") >= 0 ? idx("first_name") : idx("firstname");
+    const cMid = idx("middle_name") >= 0 ? idx("middle_name") : idx("middlename");
+    const cSex = idx("sex") >= 0 ? idx("sex") : idx("gender");
+    const cDob = idx("birthdate") >= 0 ? idx("birthdate") : idx("birth_date");
+    const cLrn = idx("lrn");
+    if (cLast < 0 || cDob < 0) { toast("Missing a last_name or birthdate column"); d.close(); return; }
+    let added = 0; const skipped = [];
+    rows.slice(1).forEach((r, i) => {
+      const last = (r[cLast] || "").trim(), dob = (r[cDob] || "").trim();
+      const sexRaw = (cSex >= 0 ? r[cSex] : "").trim().toUpperCase();
+      if (!last) { skipped.push("row " + (i + 2) + ": no last name"); return; }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) { skipped.push("row " + (i + 2) + ": birthdate '" + dob + "' is not YYYY-MM-DD"); return; }
+      S.learners.push({
+        id: uid(), classId: S.settings.classId,
+        last: last, first: (cFirst >= 0 ? r[cFirst] : "").trim(), middle: (cMid >= 0 ? r[cMid] : "").trim(),
+        sex: sexRaw.startsWith("F") ? "F" : "M", birth: dob, lrn: (cLrn >= 0 ? r[cLrn] : "").trim()
+      });
+      added++;
+    });
+    save(); d.close(); render();
+    toast(added + " learner(s) imported" + (skipped.length ? ", " + skipped.length + " skipped" : ""));
+    if (skipped.length) console.warn("SIBOL import skipped:\n" + skipped.join("\n"));
+  });
+}
+
+function exportRoster() {
+  const rs = learnersOf(S.settings.classId).sort(sortRoster);
+  if (!rs.length) { toast("Nothing to export"); return; }
+  const head = ["last_name", "first_name", "middle_name", "sex", "birthdate", "lrn"];
+  const body = rs.map(l => S.settings.anon
+    ? [learnerCode(l), "", "", l.sex, "", ""]
+    : [l.last, l.first, l.middle, l.sex, l.birth, l.lrn]);
+  download("sibol-roster-" + new Date().toISOString().slice(0, 10) + ".csv", toCSV([head].concat(body)));
+  toast("Roster exported");
+}
+
+/* =====================================================================
+   Backup / restore / wipe
+   ===================================================================== */
+function backup() {
+  download("sibol-backup-" + new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-") + ".json",
+    JSON.stringify({ app: "SIBOL", version: APP.version, exported: new Date().toISOString(), state: S }, null, 1),
+    "application/json");
+  toast("Backup downloaded");
+}
+function restore() {
+  const d = $("#dlg"), f = $("#dlgForm");
+  f.innerHTML = "<h3>Restore backup</h3><p>This <strong>replaces everything</strong> currently on this device. Download a backup of the current data first if you are unsure.</p>" +
+    "<p><input type='file' id='bkFile' accept='.json,application/json'></p>" +
+    "<div class='row' style='justify-content:flex-end'><button value='no' class='sec'>Cancel</button></div>";
+  d.showModal();
+  $("#bkFile").addEventListener("change", async ev => {
+    const file = ev.target.files[0]; if (!file) return;
+    try {
+      const j = JSON.parse(await file.text());
+      const st = j.state || j;
+      if (!st || !Array.isArray(st.learners) || !Array.isArray(st.classes)) throw new Error("not a SIBOL backup");
+      S = Object.assign(BLANK(), st);
+      await DB.set(APP.key, S); d.close(); render();
+      toast("Restored " + S.learners.length + " learner(s)");
+    } catch (e) { toast("Could not restore: " + e.message); }
+  });
+}
+async function wipe() {
+  if (await confirmDlg("Erase all data?",
+    "Every class, learner, measurement and learning entry on this device will be permanently deleted. " +
+    "This cannot be undone, and SIBOL keeps no copy anywhere else.", "Erase everything")) {
+    S = BLANK(); await DB.set(APP.key, S); render(); toast("All data erased");
+  }
+}
+
+/* =====================================================================
+   Wiring
+   ===================================================================== */
+function wire() {
+  /* setup */
+  const map = { schName: "name", schId: "id", schDiv: "division", schRegion: "region", schDistrict: "district", schYear: "year" };
+  for (const k in map) $("#" + k).addEventListener("input", e => { S.school[map[k]] = e.target.value; save(); });
+  $("#anonMode").addEventListener("change", e => { S.settings.anon = e.target.checked; save(); render(); });
+  $("#addClass").addEventListener("click", () => {
+    const grade = $("#clGrade").value.trim(), section = $("#clSection").value.trim();
+    if (!grade || !section) { toast("Grade level and section are both required"); return; }
+    const c = { id: uid(), grade, section, adviser: $("#clAdviser").value.trim() };
+    S.classes.push(c);
+    if (!S.settings.classId) S.settings.classId = c.id;
+    $("#clGrade").value = ""; $("#clSection").value = ""; $("#clAdviser").value = "";
+    save(); render(); toast("Class added");
+  });
+
+  /* roster */
+  $("#rosterClass").addEventListener("change", e => { S.settings.classId = e.target.value; save(); render(); });
+  $("#addLearner").addEventListener("click", () => {
+    const err = $("#learnerErr"); err.textContent = "";
+    if (!S.settings.classId) { err.textContent = "Create a class first."; return; }
+    const last = $("#lnLast").value.trim(), first = $("#lnFirst").value.trim(), birth = $("#lnBirth").value;
+    if (!last) { err.textContent = "Last name is required."; return; }
+    if (!birth) { err.textContent = "Birthdate is required — age drives every z-score."; return; }
+    const am = WHO.ageMonths(birth, new Date().toISOString().slice(0, 10));
+    if (am == null) { err.textContent = "That birthdate is in the future."; return; }
+    if (am > 300) { err.textContent = "That birthdate gives an age over 25 years — please check it."; return; }
+    S.learners.push({ id: uid(), classId: S.settings.classId, last, first,
+      middle: $("#lnMiddle").value.trim(), sex: $("#lnSex").value, birth, lrn: $("#lnLrn").value.trim() });
+    ["lnLast", "lnFirst", "lnMiddle", "lnBirth", "lnLrn"].forEach(i => $("#" + i).value = "");
+    save(); render(); $("#lnLast").focus(); toast("Learner added");
+  });
+  $("#btnImportRoster").addEventListener("click", importRosterDialog);
+  $("#btnExportRoster").addEventListener("click", exportRoster);
+
+  /* measure */
+  $("#measClass").addEventListener("change", e => { S.settings.classId = e.target.value; queueIdx = 0; save(); render(); });
+  $("#measRound").addEventListener("change", e => { S.settings.round = e.target.value; queueIdx = 0; save(); render(); });
+  $("#measDate").addEventListener("change", e => { S.settings.measDate = e.target.value; save(); renderMeasure(); });
+  $("#inHeight").addEventListener("input", livePreview);
+  $("#inWeight").addEventListener("input", livePreview);
+  $("#inHeight").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); $("#inWeight").focus(); } });
+  $("#inWeight").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); $("#btnSaveNext").click(); } });
+  $("#btnSaveNext").addEventListener("click", () => {
+    if (!saveCurrentMeasurement()) return;
+    const q = measQueue();
+    if (queueIdx < q.length - 1) { queueIdx++; renderMeasure(); $("#inHeight").focus(); }
+    else { renderMeasure(); toast("End of class list — this round is complete"); }
+  });
+  $("#btnPrev").addEventListener("click", () => { if (queueIdx > 0) { queueIdx--; renderMeasure(); } });
+  $("#btnSkip").addEventListener("click", () => {
+    const q = measQueue();
+    if (queueIdx < q.length - 1) { queueIdx++; renderMeasure(); } else toast("End of class list");
+  });
+
+  /* learning */
+  $("#lrnClass").addEventListener("change", e => { S.settings.classId = e.target.value; save(); render(); });
+  $("#lrnQuarter").addEventListener("change", e => { S.settings.quarter = e.target.value; save(); render(); });
+  $("#lrnType").addEventListener("change", e => { S.settings.indicator = e.target.value; save(); render(); });
+
+  /* analysis */
+  $("#anClass").addEventListener("change", e => { S.settings.anScope = e.target.value; save(); renderAnalysis(); });
+  $("#anRound").addEventListener("change", e => { S.settings.round = e.target.value; save(); renderAnalysis(); });
+  $("#anQuarter").addEventListener("change", e => { S.settings.quarter = e.target.value; save(); renderAnalysis(); });
+
+  /* reports */
+  $("#rpClass").addEventListener("change", e => { S.settings.rpScope = e.target.value; save(); renderReports(); });
+  $("#rpKind").addEventListener("change", renderReports);
+  $("#btnPrint").addEventListener("click", () => window.print());
+  $("#btnCsv").addEventListener("click", reportCSV);
+  $("#btnBackup").addEventListener("click", backup);
+  $("#btnRestore").addEventListener("click", restore);
+  $("#btnWipe").addEventListener("click", wipe);
+
+  /* reference data */
+  $("#refFile").addEventListener("change", e => { if (e.target.files[0]) acceptWHOFile(e.target.files[0]); });
+  $("#btnRefReload").addEventListener("click", async () => { await loadWHO(); render(); toast(WHO.ready ? "Reference data ready" : "Still no reference data found"); });
+
+  window.addEventListener("hashchange", () => {
+    const id = location.hash.slice(1);
+    if (TABS.some(t => t.id === id) && id !== current) go(id);
+  });
+  window.addEventListener("beforeunload", () => { clearTimeout(saveT); DB.set(APP.key, S); });
+}
+
+/* =====================================================================
+   Boot
+   ===================================================================== */
+async function boot() {
+  const stored = await DB.get(APP.key);
+  if (stored && typeof stored === "object") S = Object.assign(BLANK(), stored);
+  if (!S.settings.classId && S.classes.length) S.settings.classId = S.classes[0].id;
+  await loadWHO();
+  buildTabs(); wire();
+  const start = TABS.some(t => t.id === location.hash.slice(1)) ? location.hash.slice(1)
+    : (S.classes.length ? (WHO.ready ? "measure" : "ref") : "setup");
+  go(start);
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    navigator.serviceWorker.register("sw.js").catch(() => { /* not deployed with sw.js — fine */ });
+  }
+}
+boot();
+
+/* expose for the test harness */
+if (typeof window !== "undefined") window.SIBOL = { WHO, Stats, BAZ_CATS, HAZ_CATS, classify, plausible, get state() { return S; } };
+</script>
+</body>
+</html>
