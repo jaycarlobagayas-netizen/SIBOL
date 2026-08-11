@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#146b4f">
+<meta name="theme-color" content="#0E4A37">
 <meta name="description" content="SIBOL — offline nutrition and reading check for DepEd classrooms. Works on any phone, no internet needed.">
 <title>SIBOL — Nutrition &amp; Reading Check</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -22,14 +22,22 @@
 
 <style>
 :root{
-  --green:#146b4f; --green-d:#0b4534; --green-l:#e7f3ee; --green-m:#2f9470;
-  --ink:#12211d; --ink-2:#46564f; --ink-3:#78877f;
-  --line:#dbe4e0; --bg:#f2f6f4; --card:#fff;
-  --sev:#9b1c1c; --wast:#c25c14; --norm:#1a7a4c; --over:#96771a; --obese:#7d4610; --tall:#1f5a94;
-  --alert:#a3231f; --alert-bg:#fbecea; --focus:#0b6bcb;
-  --r:14px; --sh:0 1px 2px rgba(18,33,29,.05),0 6px 18px rgba(18,33,29,.06);
+  /* brand: dark green, white, yellow */
+  --dg:#0E4A37; --dg-2:#146B4F; --dg-3:#2E8B68; --dg-ink:#08301F;
+  --yl:#F2C230; --yl-2:#FFD75E; --yl-lt:#FDF3D0; --yl-pale:#FEFAEC;
+  --white:#ffffff;
+  /* text — all checked for contrast on white and on light yellow */
+  --ink:#10241C; --ink-2:#3D4F47; --ink-3:#63756C;
+  --line:#DCE5E1; --line-2:#E8DFC0; --bg:#F4F7F5; --card:#fff;
+  /* severity ramp: dark green healthy -> yellow -> amber -> dark brown */
+  --sev:#7A3B0B; --wast:#B26A05; --norm:#0E4A37; --over:#8A7300; --obese:#6B4E06; --tall:#3E6B24;
+  --alert:#7A3B0B; --alert-bg:#FBEEDC;
+  --focus:#0B5FBF;
+  --r:14px; --sh:0 1px 2px rgba(14,74,55,.05),0 6px 18px rgba(14,74,55,.07);
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   --tap:52px;
+  /* legacy aliases so nothing breaks */
+  --green:var(--dg-2); --green-d:var(--dg); --green-l:#E6F1EC; --green-m:var(--dg-3);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
@@ -49,11 +57,11 @@ ul.tight li{margin:.3rem 0}
 
 /* ---------------- shell ---------------- */
 header.top{
-  background:var(--green);color:#fff;padding:.55rem .8rem;display:flex;align-items:center;gap:.6rem;
+  background:var(--dg);color:#fff;padding:.55rem .8rem;display:flex;align-items:center;gap:.6rem;
   position:sticky;top:0;z-index:50;padding-top:calc(.55rem + env(safe-area-inset-top));
 }
 .brand{font-weight:800;letter-spacing:.03em;font-size:1.05rem}
-.brand span{font-weight:400;font-size:.72rem;opacity:.85;letter-spacing:0;display:block;margin-top:-2px}
+.brand span{font-weight:400;font-size:.72rem;color:var(--yl-2);opacity:1;letter-spacing:0;display:block;margin-top:-2px}
 header.top .sp{flex:1}
 .iconbtn{
   background:rgba(255,255,255,.15);border:0;color:#fff;border-radius:10px;
@@ -62,19 +70,19 @@ header.top .sp{flex:1}
 .iconbtn:active{background:rgba(255,255,255,.3)}
 
 /* step rail */
-nav.rail{background:var(--green-d);position:sticky;top:0;z-index:49;overflow-x:auto;-webkit-overflow-scrolling:touch}
+nav.rail{background:var(--dg-ink);position:sticky;top:0;z-index:49;overflow-x:auto;-webkit-overflow-scrolling:touch}
 nav.rail ol{display:flex;margin:0;padding:.45rem .5rem;list-style:none;gap:.3rem;min-width:max-content}
 nav.rail button{
-  display:flex;align-items:center;gap:.4rem;background:none;border:0;color:#bcdccf;
+  display:flex;align-items:center;gap:.4rem;background:none;border:0;color:#CFE3D9;
   padding:.4rem .6rem;border-radius:20px;font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap;min-height:40px;
 }
 nav.rail button .n{
   width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.18);
   display:grid;place-items:center;font-size:.72rem;font-weight:800;flex:0 0 auto;
 }
-nav.rail button[aria-current="true"]{background:#fff;color:var(--green-d)}
-nav.rail button[aria-current="true"] .n{background:var(--green);color:#fff}
-nav.rail button.done .n{background:#8fd3b6;color:#0b4534}
+nav.rail button[aria-current="true"]{background:var(--yl);color:var(--dg-ink)}
+nav.rail button[aria-current="true"] .n{background:var(--dg);color:var(--yl)}
+nav.rail button.done .n{background:var(--yl-2);color:var(--dg-ink)}
 nav.rail button:focus-visible{outline:2px solid #fff;outline-offset:-2px}
 
 main{padding:1rem .8rem 6rem;max-width:900px;margin:0 auto}
@@ -100,10 +108,10 @@ input[type=checkbox]{width:26px;height:26px;min-height:26px;flex:0 0 auto;accent
 
 button,.btn{
   font:inherit;font-weight:700;cursor:pointer;border-radius:12px;padding:.7rem 1rem;
-  border:2px solid var(--green);background:var(--green);color:#fff;min-height:var(--tap);
+  border:2px solid var(--dg);background:var(--dg);color:#fff;min-height:var(--tap);
 }
 button:active{transform:translateY(1px)}
-button.sec{background:#fff;color:var(--green-d)}
+button.sec{background:var(--yl);border-color:var(--dg);color:var(--dg-ink)}
 button.ghost{background:#fff;border-color:var(--line);color:var(--ink-2)}
 button.danger{background:#fff;border-color:#dcb4b2;color:var(--alert)}
 button.tiny{min-height:38px;padding:.3rem .6rem;font-size:.8rem;border-radius:9px}
@@ -112,7 +120,7 @@ button:focus-visible{outline:3px solid #bcd9f5;outline-offset:2px}
 .wide{width:100%}
 .next{
   width:100%;font-size:1.05rem;padding:.9rem 1rem;min-height:60px;
-  background:var(--green);border-color:var(--green);display:flex;align-items:center;justify-content:center;gap:.5rem;
+  background:var(--dg);border-color:var(--dg);display:flex;align-items:center;justify-content:center;gap:.5rem;
 }
 
 /* segmented big choice */
@@ -121,38 +129,38 @@ button:focus-visible{outline:3px solid #bcd9f5;outline-offset:2px}
   background:#fff;border:2px solid var(--line);color:var(--ink-2);font-size:.88rem;
   border-radius:10px;min-height:var(--tap);padding:.5rem .4rem;
 }
-.choice button[aria-pressed="true"]{background:var(--green-l);border-color:var(--green);color:var(--green-d)}
+.choice button[aria-pressed="true"]{background:var(--yl-lt);border-color:var(--dg);color:var(--dg);box-shadow:inset 0 0 0 1px var(--dg)}
 .choice.small button{min-height:44px;font-size:.82rem}
 
 /* ---------------- step header ---------------- */
 .steph{margin:0 0 .9rem}
-.steph .k{font-size:.75rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--green-m)}
+.steph .k{font-size:.75rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--dg-3)}
 .steph h1{margin:.15rem 0 .25rem}
 .steph p{margin:0;color:var(--ink-2);font-size:.94rem}
 
 /* ---------------- status chips ---------------- */
 .chip{display:inline-block;font-size:.75rem;font-weight:800;padding:.2rem .5rem;border-radius:7px;white-space:nowrap;border:1.5px solid transparent}
-.s-sev{background:#f8dedd;color:var(--sev);border-color:#eab9b7}
-.s-wast{background:#fce9d9;color:var(--wast);border-color:#f2cfad}
-.s-norm{background:#dcf0e5;color:var(--norm);border-color:#b9e0cb}
-.s-over{background:#f8f0d2;color:var(--over);border-color:#eddfa9}
-.s-obese{background:#f3e4d3;color:var(--obese);border-color:#e3c9ab}
-.s-tall{background:#e2ecf8;color:var(--tall);border-color:#c1d7ee}
-.s-na{background:#ecefed;color:var(--ink-3);border-color:#dce0de}
+.s-sev{background:#F3E0CE;color:var(--sev);border-color:#DEBE95}
+.s-wast{background:#FBEFCF;color:#7C4A03;border-color:#E8D190}
+.s-norm{background:#DFEFE7;color:var(--dg);border-color:#B4D6C6}
+.s-over{background:#FAF3D2;color:#6E5C00;border-color:#E5D48D}
+.s-obese{background:#F1E7CB;color:#57400A;border-color:#DCC896}
+.s-tall{background:#E7F0DC;color:#33581C;border-color:#C6DBB1}
+.s-na{background:#EEF1EF;color:#54655C;border-color:#D8DEDA}
 
 .kpi{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:.75rem;text-align:center}
-.kpi .n{font-size:1.9rem;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums}
-.kpi .l{font-size:.78rem;color:var(--ink-2);margin-top:.2rem}
-.kpi.bad{border-color:#e8c4c2;background:var(--alert-bg)} .kpi.bad .n{color:var(--alert)}
-.kpi.good{border-color:#bfe0cd;background:#eef8f2} .kpi.good .n{color:var(--norm)}
+.kpi .n{font-size:1.9rem;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums;color:var(--ink)}
+.kpi .l{font-size:.78rem;color:var(--ink-2);margin-top:.2rem;font-weight:600}
+.kpi.bad{border-color:#E3C79A;background:var(--alert-bg)} .kpi.bad .n{color:var(--sev)}
+.kpi.good{border-color:#BBD8CB;background:#EDF6F1} .kpi.good .n{color:var(--dg)}
 
-.note{background:var(--green-l);border-left:5px solid var(--green);padding:.75rem .9rem;border-radius:0 10px 10px 0;font-size:.92rem;margin:0 0 .9rem}
-.note.warn{background:#fff6e6;border-color:#c78a20}
-.note.stop{background:var(--alert-bg);border-color:var(--alert)}
+.note{background:var(--yl-pale);border-left:5px solid var(--yl);padding:.75rem .9rem;border-radius:0 10px 10px 0;font-size:.92rem;margin:0 0 .9rem}
+.note.warn{background:var(--yl-lt);border-color:#C8991A}
+.note.stop{background:var(--alert-bg);border-color:var(--sev)}
 .note :last-child{margin-bottom:0}
 
 .big-say{font-size:1.1rem;line-height:1.45;font-weight:600;margin:0 0 .6rem}
-.big-say strong{color:var(--green-d)}
+.big-say strong{color:var(--dg)}
 
 /* ---------------- empty state ---------------- */
 .empty{text-align:center;padding:1.6rem 1rem}
@@ -164,9 +172,9 @@ button:focus-visible{outline:3px solid #bcd9f5;outline-offset:2px}
 .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -.2rem}
 table{border-collapse:collapse;width:100%;font-size:.88rem}
 th,td{text-align:left;padding:.5rem .55rem;border-bottom:1px solid var(--line);vertical-align:middle}
-th{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2);background:#f6faf8}
-td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:.84rem}
-tr.flag td{background:#fff7f6}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--dg);background:var(--yl-pale)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:.84rem;color:var(--ink);font-weight:600}
+tr.flag td{background:var(--yl-lt)}
 
 /* learner rows */
 .lrow{display:flex;align-items:center;gap:.6rem;padding:.6rem .2rem;border-bottom:1px solid var(--line)}
@@ -176,20 +184,20 @@ tr.flag td{background:#fff7f6}
 
 /* ---------------- measure screen ---------------- */
 .mcard{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;margin-bottom:.9rem}
-.mhead{padding:.8rem 1rem;background:var(--green-l);border-bottom:1px solid var(--line)}
+.mhead{padding:.8rem 1rem;background:var(--yl-pale);border-bottom:1px solid var(--line-2)}
 .mhead .who{font-size:1.25rem;font-weight:800;line-height:1.2}
 .mhead .meta{font-size:.85rem;color:var(--ink-2);margin-top:.15rem}
-.prog{height:6px;background:#dfe9e5}
-.prog i{display:block;height:100%;background:var(--green-m)}
+.prog{height:7px;background:#E3EAE7}
+.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--dg),var(--yl))}
 .mbody{padding:.9rem 1rem}
 .slots{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.7rem}
 .slot{
   border:2.5px solid var(--line);border-radius:12px;padding:.5rem .6rem;background:#fff;text-align:left;cursor:pointer;min-height:78px;
 }
-.slot[aria-selected="true"]{border-color:var(--green);background:#f4fbf8;box-shadow:0 0 0 3px rgba(20,107,79,.1)}
+.slot[aria-selected="true"]{border-color:var(--dg);background:var(--yl-pale);box-shadow:0 0 0 3px rgba(242,194,48,.45)}
 .slot .lab{font-size:.75rem;font-weight:800;color:var(--ink-2);text-transform:uppercase;letter-spacing:.04em}
-.slot .val{font-size:1.9rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.15;min-height:2.2rem}
-.slot .val.ph{color:#c2ccc8}
+.slot .val{font-size:1.9rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.15;min-height:2.2rem;color:var(--ink)}
+.slot .val.ph{color:#9AA8A2}
 .slot .un{font-size:.85rem;font-weight:600;color:var(--ink-3)}
 
 .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem}
@@ -197,7 +205,7 @@ tr.flag td{background:#fff7f6}
   min-height:58px;font-size:1.4rem;font-weight:700;background:#fff;color:var(--ink);
   border:2px solid var(--line);border-radius:12px;
 }
-.pad button:active{background:var(--green-l);border-color:var(--green)}
+.pad button:active{background:var(--yl-lt);border-color:var(--dg)}
 .pad button.act{background:#f6faf8}
 
 .verdict{padding:.75rem 1rem;border-top:1px solid var(--line);font-size:.95rem}
@@ -229,14 +237,14 @@ dialog h3{margin-top:0}
   width:30px;height:30px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;
   font-size:.85rem;font-weight:800;background:#e9edeb;color:var(--ink-3);border:2px solid transparent;
 }
-.checkline.on .tick{background:var(--norm);color:#fff}
-.checkline.now .tick{background:#fff;color:var(--green);border-color:var(--green)}
+.checkline.on .tick{background:var(--dg);color:var(--yl)}
+.checkline.now .tick{background:var(--yl);color:var(--dg-ink);border-color:var(--dg)}
 .checkline .tx{flex:1}
 .checkline .tx b{display:block;font-size:.98rem}
 .checkline .tx small{display:block;color:var(--ink-2)}
 .checkline .go{color:var(--ink-3);font-size:1.2rem}
 
-.demo-banner{background:#fff3d6;border:1.5px solid #e2c273;color:#6b4c05;border-radius:12px;padding:.6rem .8rem;font-size:.85rem;margin:0 0 .9rem;display:flex;gap:.6rem;align-items:center}
+.demo-banner{background:var(--yl-lt);border:1.5px solid #D8B84E;color:#5C4406;border-radius:12px;padding:.6rem .8rem;font-size:.85rem;margin:0 0 .9rem;display:flex;gap:.6rem;align-items:center}
 .demo-banner button{min-height:38px;padding:.3rem .7rem;font-size:.8rem}
 
 @media print{
@@ -251,27 +259,49 @@ dialog h3{margin-top:0}
   @page{size:A4;margin:14mm}
 }
 .printonly{display:none}
+.ic{width:1.15em;height:1.15em;flex:0 0 auto;vertical-align:-.18em}
+.attrib{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.6rem;margin:0 0 .7rem}
+.attrib .org{
+  display:flex;align-items:center;gap:.6rem;background:#fff;border:1.5px solid var(--line);
+  border-radius:12px;padding:.6rem .7rem;
+}
+.attrib .org .mk{
+  width:38px;height:38px;flex:0 0 auto;border-radius:9px;background:var(--dg);color:var(--yl);
+  display:grid;place-items:center;
+}
+.attrib .org .mk img{width:100%;height:100%;object-fit:contain;border-radius:9px;background:#fff}
+.attrib .org .tx b{display:block;font-size:.78rem;line-height:1.2;color:var(--ink)}
+.attrib .org .tx small{display:block;font-size:.68rem;color:var(--ink-3);line-height:1.25;margin-top:1px}
+.ic-lg{width:38px;height:38px}
+.empty .ico{color:var(--dg-3);opacity:.75;display:flex;justify-content:center;margin-bottom:.55rem}
+.empty .ico .ic{width:40px;height:40px}
 
 /* ================= dashboard & charts ================= */
 .dashgrid{display:grid;gap:.9rem}
 @media(min-width:760px){.dashgrid.c2{grid-template-columns:1fr 1fr}}
 .fig{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:1rem;margin:0 0 .9rem;box-shadow:var(--sh)}
 .fig h3{margin:0 0 .15rem;display:flex;align-items:center;gap:.45rem}
-.fig h3 .leaf{color:var(--green-m);font-size:.9em}
+.fig h3 .leaf{color:var(--dg-3);display:inline-flex;align-items:center}
+.fig-head,.tbl-head{font-size:.95rem;font-weight:700;color:var(--ink);margin:0 0 .6rem;line-height:1.35}
+.fig-head .num,.tbl-head .num{color:var(--dg);font-weight:800}
+.fig-note,.tbl-note{font-size:.82rem;color:var(--ink-2);margin:.7rem 0 0;line-height:1.5}
+.fig-note b,.tbl-note b{color:var(--ink);font-style:italic}
 .fig .capt{font-size:.82rem;color:var(--ink-2);margin:0 0 .8rem}
-.fig .src{font-size:.74rem;color:var(--ink-3);margin:.7rem 0 0;border-top:1px dashed var(--line);padding-top:.5rem}
+.fig .src{font-size:.76rem;color:var(--ink-3);margin:.45rem 0 0}
+.fig .src b{font-style:italic;color:var(--ink-2)}
 .fig svg{display:block;width:100%;height:auto;overflow:visible}
 .chart-info{
-  min-height:2.4rem;margin-top:.6rem;padding:.45rem .6rem;border-radius:9px;background:var(--green-l);
-  font-size:.84rem;color:var(--green-d);display:flex;align-items:center;gap:.4rem
+  min-height:2.4rem;margin-top:.6rem;padding:.5rem .65rem;border-radius:9px;background:var(--yl-lt);
+  border:1px solid var(--line-2);font-size:.84rem;color:var(--ink);font-weight:600;display:flex;align-items:center;gap:.4rem
 }
-.chart-info.idle{background:#f4f7f6;color:var(--ink-3)}
+.chart-info.idle{background:#F5F7F6;border-color:var(--line);color:var(--ink-3);font-weight:400}
 .legend{display:flex;flex-wrap:wrap;gap:.35rem;margin:.6rem 0 0}
 .legend button{
   display:flex;align-items:center;gap:.35rem;background:#fff;border:1.5px solid var(--line);color:var(--ink-2);
   border-radius:20px;padding:.25rem .6rem;font-size:.78rem;font-weight:600;min-height:34px;
 }
-.legend button[aria-pressed="false"]{opacity:.4;text-decoration:line-through}
+.legend button[aria-pressed="false"]{opacity:.45;text-decoration:line-through}
+.legend button[aria-pressed="true"]{border-color:var(--dg);background:var(--yl-pale);color:var(--ink)}
 .legend .sw{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
 .seg,.barhit,.dot,.slopeline,.radararea{cursor:pointer;transition:opacity .15s}
 .seg:hover,.barhit:hover{opacity:.78}
@@ -280,22 +310,22 @@ dialog h3{margin-top:0}
 .seg.dim,.barg.dim{opacity:.25}
 svg .anim{animation:fadeUp .5s ease both}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.statbox{background:#f8fbfa;border:1px solid var(--line);border-radius:10px;padding:.7rem .8rem;font-size:.86rem;margin:.7rem 0 0}
-.statbox .row1{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;font-family:var(--mono);font-size:.8rem}
+.statbox{background:var(--yl-pale);border:1px solid var(--line-2);border-radius:10px;padding:.7rem .8rem;font-size:.86rem;margin:.7rem 0 0}
+.statbox .row1{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;font-family:var(--mono);font-size:.8rem;color:var(--ink);font-weight:600}
 .statbox b{font-family:inherit}
 .sig{display:inline-block;font-size:.7rem;font-weight:800;padding:.12rem .4rem;border-radius:5px}
-.sig.yes{background:#dcf0e5;color:var(--norm)} .sig.no{background:#ecefed;color:var(--ink-3)}
-.sig.weak{background:#fff2d9;color:#8a6410}
+.sig.yes{background:var(--dg);color:var(--yl-2)} .sig.no{background:#EAEEEC;color:#4A5B53}
+.sig.weak{background:var(--yl);color:#4A3600}
 table.stat{font-size:.84rem}
 table.stat td.num,table.stat th.num{font-family:var(--mono)}
 .refs{font-size:.82rem;line-height:1.5}
 .refs li{margin:.45rem 0}
-.edcom{border-left:5px solid var(--green-m);background:linear-gradient(180deg,#f0f8f4,#fff);border-radius:0 12px 12px 0;padding:.9rem 1rem;margin:0 0 .9rem}
+.edcom{border-left:5px solid var(--dg);background:linear-gradient(180deg,#EEF5F1,#fff);border-radius:0 12px 12px 0;padding:.9rem 1rem;margin:0 0 .9rem}
 .edcom h4{margin:.9rem 0 .35rem;color:var(--green-d)}
-.edcom .pill2{display:inline-block;background:var(--green);color:#fff;font-size:.68rem;font-weight:800;letter-spacing:.05em;
+.edcom .pill2{display:inline-block;background:var(--dg);color:var(--yl-2);font-size:.68rem;font-weight:800;letter-spacing:.05em;
   text-transform:uppercase;padding:.2rem .5rem;border-radius:20px;margin-bottom:.4rem}
 .maptbl td{vertical-align:top;font-size:.86rem}
-.maptbl td:first-child{width:44%;color:var(--green-d);font-weight:600}
+.maptbl td:first-child{width:44%;color:var(--dg);font-weight:600}
 @media print{ .fig{break-inside:avoid;box-shadow:none;border:1px solid #ccc} .chart-info{display:none} .legend{display:none} }
 </style>
 </head>
@@ -457,6 +487,11 @@ const pct = (a, b) => (b ? (100 * a / b) : 0);
 const fmtZ = z => (z == null || !isFinite(z)) ? "—" : (z >= 0 ? "+" : "") + z.toFixed(2);
 const plural = (n, one, many) => n + " " + (n === 1 ? one : (many || one + "s"));
 const todayISO = () => new Date().toISOString().slice(0, 10);
+/* SIBOL reports on the two mandated measurement rounds only.
+   Baseline is recorded with Quarter 1 learning, endline with Quarter 4. */
+const roundQuarter = r => (r === "endline" ? "Q4" : "Q1");
+const roundLabel   = r => (r === "endline" ? "Endline (Quarter 4)" : "Baseline (Quarter 1)");
+function syncQuarter() { S.settings.quarter = roundQuarter(S.settings.round); }
 
 let toastT;
 function toast(msg) {
@@ -786,7 +821,11 @@ function progress() {
 const chipFor = c => c ? '<span class="chip ' + c.chip + '">' + esc(c.label) + "</span>" : '<span class="chip s-na">not measured</span>';
 const plainChip = c => c ? '<span class="chip ' + c.chip + '">' + esc(c.plain) + "</span>" : '<span class="chip s-na">not measured</span>';
 const kpi = (n, l, cls) => '<div class="kpi' + (cls ? " " + cls : "") + '"><div class="n">' + n + '</div><div class="l">' + esc(l) + "</div></div>";
-const CATCOL = { SW:"#9b1c1c", W:"#c25c14", N:"#1a7a4c", OW:"#96771a", OB:"#7d4610", SS:"#9b1c1c", ST:"#c25c14", T:"#1f5a94" };
+/* severity ramp inside the brand palette: dark green healthy -> yellow -> amber -> dark brown.
+   The two severe categories are additionally hatched in figures, so they stay distinguishable
+   in greyscale and for colour-vision-deficient readers. */
+const CATCOL = { SW:"#7A3B0B", W:"#D9971A", N:"#0E4A37", OW:"#B59A16", OB:"#6B4E06", SS:"#7A3B0B", ST:"#D9971A", T:"#4E7C2E" };
+const HATCHED = { SW:1, SS:1 };
 function barRow(label, v, total, colour) {
   const w = total ? (100 * v / total) : 0;
   return '<div style="display:flex;align-items:center;gap:.5rem;margin:.25rem 0;font-size:.86rem">' +
@@ -887,6 +926,7 @@ function go(id) {
   try { window.scrollTo(0, 0); } catch (e) {}
 }
 function render() {
+  syncQuarter();
   paintRail();
   const sub = $("#hdrSub"), c = curClass();
   sub.textContent = c ? className(c) : "Nutrition & Reading Check";
@@ -974,9 +1014,9 @@ function renderClass() {
 
   const rs = c ? learnersOf(c.id).sort(sortRoster) : [];
   $("#rosterCard").innerHTML = !c
-    ? '<div class="empty"><div class="ico">👋</div><h3>Create a class first</h3><p>Then you can add learners to it.</p></div>'
+    ? '<div class="empty"><div class="ico">' + ICON.sprout + '</div><h3>Create a class first</h3><p>Then you can add learners to it.</p></div>'
     : (!rs.length
-      ? '<div class="empty"><div class="ico">📋</div><h3>No learners yet</h3><p>Add them one at a time above, or import a CSV list if you already have one typed up.</p></div>'
+      ? '<div class="empty"><div class="ico">' + ICON.roster + '</div><h3>No learners yet</h3><p>Add them one at a time above, or import a CSV list if you already have one typed up.</p></div>'
       : "<h3>Class list <span class='muted' style='font-weight:400'>(" + rs.length + " — " +
         rs.filter(x => x.sex === "M").length + " boys, " + rs.filter(x => x.sex === "F").length + " girls)</span></h3>" +
         rs.map((l, i) => {
@@ -1057,7 +1097,7 @@ function renderMeasure() {
   const c = curClass();
   if (!c || !learnersOf(c.id).length) {
     $("#measSetup").hidden = true;
-    $("#measZone").innerHTML = emptyState("📋", "Add your class first",
+    $("#measZone").innerHTML = emptyState(ICON.roster, "Add your class first",
       "SIBOL needs the learners' names and birthdays before it can work out whether a weight is healthy — the healthy range depends on exact age.",
       "Go to step 1: Your class", () => go("class"));
     $("#measList").hidden = true;
@@ -1069,8 +1109,8 @@ function renderMeasure() {
   $("#measSetup").innerHTML =
     '<div class="field" style="margin-bottom:.7rem"><label>Which measurement round is this?</label>' +
       '<div class="choice" id="roundPick">' +
-      '<button type="button" data-r="baseline" aria-pressed="' + (S.settings.round === "baseline") + '">Baseline<br><small>start of school year</small></button>' +
-      '<button type="button" data-r="endline" aria-pressed="' + (S.settings.round === "endline") + '">Endline<br><small>end of school year</small></button>' +
+      '<button type="button" data-r="baseline" aria-pressed="' + (S.settings.round === "baseline") + '">Baseline<br><small>start of year · Quarter 1</small></button>' +
+      '<button type="button" data-r="endline" aria-pressed="' + (S.settings.round === "endline") + '">Endline<br><small>end of year · Quarter 4</small></button>' +
       "</div></div>" +
     '<div class="field" style="margin-bottom:0"><label for="measDate">Date you are measuring</label>' +
       '<input id="measDate" type="date" value="' + esc(S.settings.measDate) + '"></div>';
@@ -1172,7 +1212,7 @@ function padPress(k) {
 
 function wireMeasure() {
   $$("#roundPick button").forEach(b => b.addEventListener("click", () => {
-    S.settings.round = b.dataset.r; queueIdx = 0; bufH = bufW = ""; pendH = pendW = false; activeSlot = "h"; save(); render();
+    S.settings.round = b.dataset.r; syncQuarter(); queueIdx = 0; bufH = bufW = ""; pendH = pendW = false; activeSlot = "h"; save(); render();
   }));
   const md = $("#measDate");
   if (md) md.addEventListener("change", e => { S.settings.measDate = e.target.value; save(); renderMeasure(); });
@@ -1221,7 +1261,7 @@ function renderLearning() {
   const c = curClass();
   if (!c || !learnersOf(c.id).length) {
     $("#lrnSetup").hidden = true;
-    $("#lrnZone").innerHTML = emptyState("📋", "Add your class first",
+    $("#lrnZone").innerHTML = emptyState(ICON.roster, "Add your class first",
       "There is nobody to record a reading level for yet.", "Go to step 1: Your class", () => go("class"));
     return;
   }
@@ -1231,9 +1271,9 @@ function renderLearning() {
     '<div class="field"><label>What are you recording?</label><div class="choice small" id="indPick">' +
       Object.keys(INDICATORS).map(k => '<button type="button" data-i="' + k + '" aria-pressed="' + (S.settings.indicator === k) + '">' +
         esc(INDICATORS[k].label) + "</button>").join("") + "</div></div>" +
-    '<div class="field" style="margin-bottom:.4rem"><label>Quarter</label><div class="choice small" id="qPick">' +
-      ["Q1","Q2","Q3","Q4"].map(q => '<button type="button" data-q="' + q + '" aria-pressed="' + (S.settings.quarter === q) + '">' + q + "</button>").join("") +
-      "</div></div>" +
+    '<div class="field" style="margin-bottom:.4rem"><label>Which round is this for?</label><div class="choice" id="qPick">' +
+      ["baseline","endline"].map(r => '<button type="button" data-r="' + r + '" aria-pressed="' + (S.settings.round === r) +
+        '">' + roundLabel(r) + "</button>").join("") + "</div></div>" +
     "<small>" + esc(def.help) + "</small>";
 
   const rows = rowsFor(c.id, S.settings.round);
@@ -1264,7 +1304,7 @@ function renderLearning() {
   $("#lrnZone").innerHTML = html;
 
   $$("#indPick button").forEach(b => b.addEventListener("click", () => { S.settings.indicator = b.dataset.i; save(); renderLearning(); }));
-  $$("#qPick button").forEach(b => b.addEventListener("click", () => { S.settings.quarter = b.dataset.q; save(); renderLearning(); }));
+  $$("#qPick button").forEach(b => b.addEventListener("click", () => { S.settings.round = b.dataset.r; syncQuarter(); save(); render(); }));
   $$("[data-bands]").forEach(g => g.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
     setLearning(g.dataset.bands, b.dataset.b === currentBand(g.dataset.bands) ? "" : b.dataset.b);
     renderLearning();
@@ -1293,7 +1333,7 @@ function renderResults() {
   const c = curClass();
   if (!c || !learnersOf(c.id).length) {
     $("#resSetup").hidden = true;
-    $("#resZone").innerHTML = emptyState("📋", "Nothing to show yet",
+    $("#resZone").innerHTML = emptyState(ICON.roster, "Nothing to show yet",
       "Add your class and measure a few learners — the results build themselves from there.", "Go to step 1: Your class", () => go("class"));
     return;
   }
@@ -1302,15 +1342,15 @@ function renderResults() {
     '<div class="row">' +
       '<div class="field" style="flex:1;min-width:170px;margin:0"><label for="resScope">Looking at</label>' + selectHTML("resScope", classOptions(true), scope) + "</div>" +
       '<div class="field" style="flex:1;min-width:150px;margin:0"><label for="resRound">Round</label>' +
-        selectHTML("resRound", [{v:"baseline",t:"Baseline"},{v:"endline",t:"Endline"}], S.settings.round) + "</div>" +
+        selectHTML("resRound", [{v:"baseline",t:"Baseline — Q1"},{v:"endline",t:"Endline — Q4"}], S.settings.round) + "</div>" +
     "</div>";
   $("#resScope").addEventListener("change", e => { S.settings.resScope = e.target.value; save(); renderResults(); });
-  $("#resRound").addEventListener("change", e => { S.settings.round = e.target.value; save(); renderResults(); });
+  $("#resRound").addEventListener("change", e => { S.settings.round = e.target.value; syncQuarter(); save(); renderResults(); });
 
   const rows = rowsFor(scope, S.settings.round);
   const measured = rows.filter(r => r.meas && r.baz != null);
   if (!measured.length) {
-    $("#resZone").innerHTML = emptyState("⚖️", "No measurements in this round yet",
+    $("#resZone").innerHTML = emptyState(ICON.scale, "No measurements in this round yet",
       "Once you weigh and measure even a few learners, this page fills in on its own — who is underweight, who is short for their age, and who needs attention first.",
       "Go to step 2: Measure", () => go("measure"));
     return;
@@ -1358,7 +1398,7 @@ function renderResults() {
   const paired = pairedRows(scope, S.settings.round, S.settings.quarter).filter(x => x.below !== null);
   h += '<div class="card"><h2>Nutrition and ' + esc(def.short) + " together</h2>";
   if (!paired.length) {
-    h += '<div class="empty" style="padding:1.2rem .5rem"><div class="ico">📖</div>' +
+    h += '<div class="empty" style="padding:1.2rem .5rem"><div class="ico">' + ICON.book + "</div>" +
       "<h3>This is the part that makes SIBOL worth using</h3>" +
       "<p>You have the measurements. Add a reading level for each learner and SIBOL will tell you whether the underweight learners are the same ones falling behind — and give you their names.</p>" +
       '<button id="goLrn" type="button">Enter reading levels</button></div></div>';
@@ -1373,7 +1413,7 @@ function renderResults() {
     const rr = (rowU && rowN && cc > 0) ? (a / rowU) / (cc / rowN) : null;
 
     h += '<p class="muted" style="font-size:.9rem">' + paired.length + " of " + n + " measured learners also have a " +
-      esc(def.short) + " level for " + esc(S.settings.quarter) + ".</p>";
+      esc(def.short) + " level recorded for " + esc(roundLabel(S.settings.round)) + ".</p>";
 
     if (rowU && rowN) {
       h += '<p class="big-say">Among learners who need nutrition attention, <strong>' + rateU.toFixed(0) +
@@ -1501,7 +1541,7 @@ function renderReports() {
   const c = curClass();
   if (!c || !learnersOf(c.id).length) {
     $("#rpSetup").hidden = true;
-    $("#rpZone").innerHTML = emptyState("🖨️", "No reports yet",
+    $("#rpZone").innerHTML = emptyState(ICON.printer, "No reports yet",
       "Reports are built from your class list and measurements.", "Go to step 1: Your class", () => go("class"));
     return;
   }
@@ -1530,7 +1570,7 @@ function renderReports() {
       " · " + esc(S.settings.round) + " · printed " + todayISO() + "</div></div>";
 
   if (!measured.length) {
-    h += '<div class="empty"><div class="ico">⚖️</div><h3>Nothing measured in this round</h3>' +
+    h += '<div class="empty"><div class="ico">' + ICON.scale + '</div><h3>Nothing measured in this round</h3>' +
       "<p>Measure some learners first and the report fills itself in.</p></div></div>";
     $("#rpZone").innerHTML = h;
     return;
@@ -1567,7 +1607,7 @@ function renderReports() {
     const list = pairedRows(scope, S.settings.round, S.settings.quarter)
       .filter(x => isUnder(x.r) && x.below === true).map(x => x.r).sort((a, b) => a.baz - b.baz);
     h += "<h2>Priority list — needs both food and learning support</h2><p class='muted'>" +
-      esc(def.label) + ", " + esc(S.settings.quarter) + ". " + list.length + " learners.</p>" +
+      esc(def.label) + " · " + esc(roundLabel(S.settings.round)) + ". " + list.length + " learners.</p>" +
       (list.length ? listTable(list, true) : "<p>Nobody is in both groups — or reading levels have not been entered yet.</p>");
   } else if (kind === "referral") {
     const list = measured.filter(r => (r.bazCat && (r.bazCat.key === "SW" || r.bazCat.key === "OB")) || (r.hazCat && r.hazCat.key === "SS"))
@@ -2015,14 +2055,24 @@ Object.assign(Stats, {
 const CH = {
   esc: s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])),
   tip(text) { return 'data-tip="' + this.esc(text) + '"'; },
-  pal: { g1:"#146b4f", g2:"#2f9470", g3:"#6bbf95", g4:"#a9dcc4", grey:"#c8d3ce", ink:"#46564f", blue:"#1f5a94", warn:"#c25c14", bad:"#9b1c1c" },
+  /** diagonal hatching so the severe categories stay distinguishable in greyscale
+      and for readers with colour vision deficiency */
+  defs() {
+    return "<defs>" + Object.keys(HATCHED).map(k =>
+      '<pattern id="hatch-' + k + '" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">' +
+      '<rect width="7" height="7" fill="' + CATCOL[k] + '"/>' +
+      '<rect width="2.6" height="7" fill="#ffffff" fill-opacity=".5"/></pattern>').join("") + "</defs>";
+  },
+  fillFor(key, colour) { return HATCHED[key] ? 'url(#hatch-' + key + ')' : colour; },
+  pal: { g1:"#0E4A37", g2:"#146B4F", g3:"#2E8B68", g4:"#7FBBA1", yl:"#F2C230", ylDark:"#B26A05",
+         grey:"#C3CEC9", ink:"#3D4F47", ink2:"#63756C", warn:"#D9971A", bad:"#7A3B0B" },
 
   /** ---- donut / pie ---- */
   donut(data, opts) {
     opts = opts || {};
     const W = 320, H = 230, cx = 108, cy = 115, R = 92, r = opts.pie ? 0 : 54;
     const total = data.reduce((a, d) => a + d.value, 0);
-    if (!total) return '<svg viewBox="0 0 ' + W + " " + H + '"><text x="' + cx + '" y="' + cy + '" text-anchor="middle" fill="#78877f" font-size="13">no data</text></svg>';
+    if (!total) return '<svg viewBox="0 0 ' + W + " " + H + '"><text x="' + cx + '" y="' + cy + '" text-anchor="middle" fill="#63756C" font-size="13">no data</text></svg>';
     let ang = -Math.PI / 2, paths = "";
     data.forEach(d => {
       if (!d.value) return;
@@ -2032,7 +2082,7 @@ const CH = {
       const tip = d.label + ": " + d.value + " of " + total + " (" + pctTxt + ")";
       if (frac >= 0.9999) {
         paths += '<circle class="seg" cx="' + cx + '" cy="' + cy + '" r="' + ((R + r) / 2) +
-          '" fill="none" stroke="' + d.color + '" stroke-width="' + (R - r) + '" ' + this.tip(tip) +
+          '" fill="none" stroke="' + this.fillFor(d.key, d.color) + '" stroke-width="' + (R - r) + '" ' + this.tip(tip) +
           ' data-key="' + this.esc(d.key || d.label) + '"><title>' + this.esc(tip) + "</title></circle>";
         return;
       }
@@ -2045,12 +2095,12 @@ const CH = {
         ? "M" + x0 + "," + y0 + "A" + R + "," + R + " 0 " + large + " 1 " + x1 + "," + y1 +
           "L" + xi1 + "," + yi1 + "A" + r + "," + r + " 0 " + large + " 0 " + xi0 + "," + yi0 + "Z"
         : "M" + cx + "," + cy + "L" + x0 + "," + y0 + "A" + R + "," + R + " 0 " + large + " 1 " + x1 + "," + y1 + "Z";
-      paths += '<path class="seg" d="' + dpath + '" fill="' + d.color + '" stroke="#fff" stroke-width="1.5" ' +
+      paths += '<path class="seg" d="' + dpath + '" fill="' + this.fillFor(d.key, d.color) + '" stroke="#fff" stroke-width="1.5" ' +
         this.tip(tip) + ' data-key="' + this.esc(d.key || d.label) + '"><title>' + this.esc(tip) + "</title></path>";
     });
     const centre = r > 0
-      ? '<text x="' + cx + '" y="' + (cy - 4) + '" text-anchor="middle" font-size="26" font-weight="800" fill="#12211d">' + total +
-        '</text><text x="' + cx + '" y="' + (cy + 15) + '" text-anchor="middle" font-size="10.5" fill="#78877f">' +
+      ? '<text x="' + cx + '" y="' + (cy - 4) + '" text-anchor="middle" font-size="26" font-weight="800" fill="#10241C">' + total +
+        '</text><text x="' + cx + '" y="' + (cy + 15) + '" text-anchor="middle" font-size="10.5" fill="#63756C">' +
         this.esc(opts.centre || "learners") + "</text>"
       : "";
     // side legend
@@ -2058,12 +2108,12 @@ const CH = {
     data.forEach(d => {
       if (opts.hideZero && !d.value) return;
       const pc = total ? (100 * d.value / total) : 0;
-      leg += '<rect x="216" y="' + (ly - 9) + '" width="11" height="11" rx="3" fill="' + d.color + '"/>' +
-        '<text x="233" y="' + ly + '" font-size="10.5" fill="#46564f">' + this.esc(d.label) + "</text>" +
-        '<text x="233" y="' + (ly + 12) + '" font-size="10" font-weight="700" fill="#12211d">' + d.value + " · " + pc.toFixed(1) + "%</text>";
+      leg += '<rect x="216" y="' + (ly - 9) + '" width="11" height="11" rx="3" fill="' + this.fillFor(d.key, d.color) + '"/>' +
+        '<text x="233" y="' + ly + '" font-size="10.5" fill="#3D4F47">' + this.esc(d.label) + "</text>" +
+        '<text x="233" y="' + (ly + 12) + '" font-size="10" font-weight="700" fill="#10241C">' + d.value + " · " + pc.toFixed(1) + "%</text>";
       ly += 30;
     });
-    return '<svg viewBox="0 0 ' + W + " " + H + '" role="img" class="anim">' + paths + centre + leg + "</svg>";
+    return '<svg viewBox="0 0 ' + W + " " + H + '" role="img" class="anim">' + this.defs() + paths + centre + leg + "</svg>";
   },
 
   /** ---- vertical bars, optional 95% interval whiskers ---- */
@@ -2079,7 +2129,7 @@ const CH = {
     for (let i = 0; i <= 4; i++) {
       const v = max * i / 4, yy = y(v);
       g += '<line x1="' + L + '" y1="' + yy + '" x2="' + (W - R) + '" y2="' + yy + '" stroke="#eef2f0"/>' +
-        '<text x="' + (L - 6) + '" y="' + (yy + 3.5) + '" text-anchor="end" font-size="9.5" fill="#78877f">' +
+        '<text x="' + (L - 6) + '" y="' + (yy + 3.5) + '" text-anchor="end" font-size="9.5" fill="#63756C">' +
         v.toFixed(opts.dp == null ? 0 : opts.dp) + (opts.unit || "") + "</text>";
     }
     items.forEach((d, i) => {
@@ -2090,14 +2140,14 @@ const CH = {
         '<rect class="barhit" x="' + (cx - bw / 2) + '" y="' + y(d.value) + '" width="' + bw + '" height="' + h +
           '" rx="5" fill="' + (d.color || this.pal.g2) + '" ' + this.tip(tip) + '><title>' + this.esc(tip) + "</title></rect>";
       if (d.lo != null && d.hi != null) {
-        g += '<line x1="' + cx + '" y1="' + y(d.lo) + '" x2="' + cx + '" y2="' + y(d.hi) + '" stroke="#12211d" stroke-width="1.6"/>' +
-          '<line x1="' + (cx - 7) + '" y1="' + y(d.hi) + '" x2="' + (cx + 7) + '" y2="' + y(d.hi) + '" stroke="#12211d" stroke-width="1.6"/>' +
-          '<line x1="' + (cx - 7) + '" y1="' + y(d.lo) + '" x2="' + (cx + 7) + '" y2="' + y(d.lo) + '" stroke="#12211d" stroke-width="1.6"/>';
+        g += '<line x1="' + cx + '" y1="' + y(d.lo) + '" x2="' + cx + '" y2="' + y(d.hi) + '" stroke="#10241C" stroke-width="1.6"/>' +
+          '<line x1="' + (cx - 7) + '" y1="' + y(d.hi) + '" x2="' + (cx + 7) + '" y2="' + y(d.hi) + '" stroke="#10241C" stroke-width="1.6"/>' +
+          '<line x1="' + (cx - 7) + '" y1="' + y(d.lo) + '" x2="' + (cx + 7) + '" y2="' + y(d.lo) + '" stroke="#10241C" stroke-width="1.6"/>';
       }
-      g += '<text x="' + cx + '" y="' + (y(d.value) - (d.hi != null ? 14 : 5)) + '" text-anchor="middle" font-size="11" font-weight="800" fill="#12211d">' +
+      g += '<text x="' + cx + '" y="' + (y(d.value) - (d.hi != null ? 14 : 5)) + '" text-anchor="middle" font-size="11" font-weight="800" fill="#10241C">' +
         d.value.toFixed(opts.dp == null ? 0 : opts.dp) + (opts.unit || "") + "</text>";
       String(d.label).split("\n").forEach((ln, k) => {
-        g += '<text x="' + cx + '" y="' + (T + ih + 16 + k * 12) + '" text-anchor="middle" font-size="10" fill="#46564f">' + this.esc(ln) + "</text>";
+        g += '<text x="' + cx + '" y="' + (T + ih + 16 + k * 12) + '" text-anchor="middle" font-size="10" fill="#3D4F47">' + this.esc(ln) + "</text>";
       });
       g += "</g>";
     });
@@ -2125,10 +2175,10 @@ const CH = {
       const [lx, ly] = pt(i, 1.24);
       const anchor = Math.abs(lx - cx) < 8 ? "middle" : (lx > cx ? "start" : "end");
       String(ax.label).split("\n").forEach((ln, k) => {
-        g += '<text x="' + lx + '" y="' + (ly + 3 + k * 11) + '" text-anchor="' + anchor + '" font-size="9.5" fill="#46564f">' + this.esc(ln) + "</text>";
+        g += '<text x="' + lx + '" y="' + (ly + 3 + k * 11) + '" text-anchor="' + anchor + '" font-size="9.5" fill="#3D4F47">' + this.esc(ln) + "</text>";
       });
     });
-    g += '<text x="' + cx + '" y="' + (cy - R - 20) + '" text-anchor="middle" font-size="9" fill="#a8b3ae">outer ring = 100%</text>';
+    g += '<text x="' + cx + '" y="' + (cy - R - 20) + '" text-anchor="middle" font-size="9" fill="#63756C">outer ring = 100%</text>';
     series.forEach(sr => {
       const pts = sr.values.map((v, i) => pt(i, Math.max(0, Math.min(1, v / 100))).join(",")).join(" ");
       g += '<polygon class="radararea anim" points="' + pts + '" fill="' + sr.color + '" fill-opacity="' +
@@ -2163,11 +2213,11 @@ const CH = {
     for (let i = 0; i <= 4; i++) {
       const c = max * i / 4, yy = y(c);
       g += '<line x1="' + L + '" y1="' + yy + '" x2="' + (W - R) + '" y2="' + yy + '" stroke="#eef2f0"/>' +
-        '<text x="' + (L - 5) + '" y="' + (yy + 3.5) + '" text-anchor="end" font-size="9" fill="#78877f">' + Math.round(c) + "</text>";
+        '<text x="' + (L - 5) + '" y="' + (yy + 3.5) + '" text-anchor="end" font-size="9" fill="#63756C">' + Math.round(c) + "</text>";
     }
     // shaded region below -2 SD
-    g += '<rect x="' + x(lo) + '" y="' + T + '" width="' + (x(-2) - x(lo)) + '" height="' + ih + '" fill="#fbeceb"/>' +
-      '<text x="' + ((x(lo) + x(-2)) / 2) + '" y="' + (T + 11) + '" text-anchor="middle" font-size="8.5" fill="#a3231f">below −2 SD</text>';
+    g += '<rect x="' + x(lo) + '" y="' + T + '" width="' + (x(-2) - x(lo)) + '" height="' + ih + '" fill="#FBEEDC"/>' +
+      '<text x="' + ((x(lo) + x(-2)) / 2) + '" y="' + (T + 11) + '" text-anchor="middle" font-size="8.5" fill="#7A3B0B">below −2 SD</text>';
     bins.forEach((c, i) => {
       if (!c) return;
       const x0 = x(lo + i * bw), x1 = x(lo + (i + 1) * bw);
@@ -2175,7 +2225,7 @@ const CH = {
       const tip = "z from " + (lo + i * bw).toFixed(1) + " to " + (lo + (i + 1) * bw).toFixed(1) +
         ": " + c + " observed, " + expect[i].toFixed(1) + " expected in a healthy reference population";
       g += '<rect class="barhit anim" x="' + (x0 + 1) + '" y="' + y(c) + '" width="' + (x1 - x0 - 2) + '" height="' + (ih - (y(c) - T)) +
-        '" rx="2" fill="' + (mid < -2 ? this.pal.warn : this.pal.g2) + '" ' + this.tip(tip) + '><title>' + this.esc(tip) + "</title></rect>";
+        '" rx="2" fill="' + (mid < -2 ? this.pal.warn : this.pal.g1) + '" ' + this.tip(tip) + '><title>' + this.esc(tip) + "</title></rect>";
     });
     // expected normal curve
     let d = "";
@@ -2183,20 +2233,20 @@ const CH = {
       const c = n * bw * Math.exp(-z * z / 2) / Math.sqrt(2 * Math.PI);
       d += (d ? "L" : "M") + x(z).toFixed(2) + "," + y(c).toFixed(2);
     }
-    g += '<path d="' + d + '" fill="none" stroke="#1f5a94" stroke-width="2" stroke-dasharray="5 3"/>';
+    g += '<path d="' + d + '" fill="none" stroke="#10241C" stroke-width="2" stroke-dasharray="6 4"/>';
     // axis
     g += '<line x1="' + L + '" y1="' + (T + ih) + '" x2="' + (W - R) + '" y2="' + (T + ih) + '" stroke="#cfdad5"/>';
     [-4, -3, -2, -1, 0, 1, 2, 3].forEach(z => {
       g += '<line x1="' + x(z) + '" y1="' + (T + ih) + '" x2="' + x(z) + '" y2="' + (T + ih + 4) + '" stroke="#cfdad5"/>' +
-        '<text x="' + x(z) + '" y="' + (T + ih + 15) + '" text-anchor="middle" font-size="9.5" fill="#46564f">' + z + "</text>";
+        '<text x="' + x(z) + '" y="' + (T + ih + 15) + '" text-anchor="middle" font-size="9.5" fill="#3D4F47">' + z + "</text>";
     });
     if (opts.meanZ != null && isFinite(opts.meanZ)) {
       g += '<line x1="' + x(opts.meanZ) + '" y1="' + T + '" x2="' + x(opts.meanZ) + '" y2="' + (T + ih) +
-        '" stroke="#9b1c1c" stroke-width="2"/>' +
-        '<text x="' + x(opts.meanZ) + '" y="' + (T - 2) + '" text-anchor="middle" font-size="9" font-weight="700" fill="#9b1c1c">class mean ' +
+        '" stroke="#7A3B0B" stroke-width="2.4"/>' +
+        '<text x="' + x(opts.meanZ) + '" y="' + (T - 2) + '" text-anchor="middle" font-size="9" font-weight="700" fill="#7A3B0B">class mean ' +
         (opts.meanZ >= 0 ? "+" : "") + opts.meanZ.toFixed(2) + "</text>";
     }
-    g += '<text x="' + (L + iw / 2) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="10" fill="#46564f">' +
+    g += '<text x="' + (L + iw / 2) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="10" fill="#3D4F47">' +
       this.esc(opts.xlabel || "z-score") + "</text>";
     return '<svg viewBox="0 0 ' + W + " " + H + '" role="img">' + g + "</svg>";
   }
@@ -2208,8 +2258,8 @@ CH.growth = function (rows, ind, sex) {
   const iw = W - L - R, ih = H - T - B;
   const pts = rows.filter(r => r.learner.sex === sex && r.ageM != null &&
                               (ind === "bfa" ? r.bmi != null : r.meas && r.meas.height));
-  if (!WHO.ready) return '<svg viewBox="0 0 360 60"><text x="180" y="34" text-anchor="middle" font-size="12" fill="#78877f">reference data unavailable</text></svg>';
-  if (!pts.length) return '<svg viewBox="0 0 360 60"><text x="180" y="34" text-anchor="middle" font-size="12" fill="#78877f">no ' +
+  if (!WHO.ready) return '<svg viewBox="0 0 360 60"><text x="180" y="34" text-anchor="middle" font-size="12" fill="#63756C">reference data unavailable</text></svg>';
+  if (!pts.length) return '<svg viewBox="0 0 360 60"><text x="180" y="34" text-anchor="middle" font-size="12" fill="#63756C">no ' +
     (sex === "M" ? "boys" : "girls") + ' measured in this group</text></svg>';
 
   let a0 = Math.min.apply(null, pts.map(p => p.ageM)) - 6;
@@ -2238,16 +2288,16 @@ CH.growth = function (rows, ind, sex) {
   let g = "";
   // band between -3 and -2 SD, and everything below -3
   const below3 = curves[0], band2 = curves[1];
-  g += '<path d="' + path(below3) + "L" + x(a1) + "," + (T + ih) + "L" + x(a0) + "," + (T + ih) + 'Z" fill="#f8dedd"/>';
-  g += '<path d="' + path(band2) + "L" + below3.slice().reverse().map(d => "L" + x(d[0]).toFixed(1) + "," + y(d[1]).toFixed(1)).join("").slice(1) + 'Z" fill="#fce9d9"/>';
+  g += '<path d="' + path(below3) + "L" + x(a1) + "," + (T + ih) + "L" + x(a0) + "," + (T + ih) + 'Z" fill="#F3E0CE"/>';
+  g += '<path d="' + path(band2) + "L" + below3.slice().reverse().map(d => "L" + x(d[0]).toFixed(1) + "," + y(d[1]).toFixed(1)).join("").slice(1) + 'Z" fill="#FBEFCF"/>';
   // gridlines
   for (let i = 0; i <= 4; i++) {
     const v = vlo + (vhi - vlo) * i / 4, yy = y(v);
     g += '<line x1="' + L + '" y1="' + yy + '" x2="' + (W - R) + '" y2="' + yy + '" stroke="#eef2f0"/>' +
-      '<text x="' + (L - 5) + '" y="' + (yy + 3.5) + '" text-anchor="end" font-size="9" fill="#78877f">' + v.toFixed(ind === "bfa" ? 1 : 0) + "</text>";
+      '<text x="' + (L - 5) + '" y="' + (yy + 3.5) + '" text-anchor="end" font-size="9" fill="#63756C">' + v.toFixed(ind === "bfa" ? 1 : 0) + "</text>";
   }
   const lab = ["−3 SD", "−2 SD", "median", "+2 SD"];
-  const col = ["#9b1c1c", "#c25c14", "#146b4f", "#96771a"];
+  const col = ["#7A3B0B", "#B26A05", "#0E4A37", "#8A7300"];
   curves.forEach((c, i) => {
     g += '<path d="' + path(c) + '" fill="none" stroke="' + col[i] + '" stroke-width="' + (i === 2 ? 2.2 : 1.6) +
       '" stroke-dasharray="' + (i === 2 ? "" : "5 3") + '"/>' +
@@ -2259,18 +2309,20 @@ CH.growth = function (rows, ind, sex) {
     const cat = ind === "bfa" ? p.bazCat : p.hazCat;
     const tip = shortName(p.learner) + " · " + Math.floor(p.ageM / 12) + "y" + (p.ageM % 12) + "m · " +
       v.toFixed(1) + (ind === "bfa" ? " kg/m²" : " cm") + " · z = " + fmtZ(z) + " · " + (cat ? cat.label : "—");
-    g += '<circle class="dot" cx="' + x(p.ageM).toFixed(1) + '" cy="' + y(v).toFixed(1) + '" r="4.2" fill="' +
-      (cat ? (CATCOL[cat.key] || "#146b4f") : "#78877f") + '" fill-opacity=".85" stroke="#fff" stroke-width="1.2" ' +
+    const severe = cat && HATCHED[cat.key];
+    g += '<circle class="dot" cx="' + x(p.ageM).toFixed(1) + '" cy="' + y(v).toFixed(1) + '" r="' + (severe ? 5.2 : 4.2) + '" fill="' +
+      (cat ? (CATCOL[cat.key] || "#0E4A37") : "#63756C") + '" fill-opacity=".9" stroke="' + (severe ? "#10241C" : "#fff") +
+      '" stroke-width="' + (severe ? 2 : 1.2) + '" ' +
       CH.tip(tip) + '><title>' + CH.esc(tip) + "</title></circle>";
   });
   g += '<line x1="' + L + '" y1="' + (T + ih) + '" x2="' + (W - R) + '" y2="' + (T + ih) + '" stroke="#cfdad5"/>';
   const stepY = Math.max(1, Math.round((a1 - a0) / 12 / 4));
   for (let yr = Math.ceil(a0 / 12); yr * 12 <= a1; yr += stepY) {
     g += '<line x1="' + x(yr * 12) + '" y1="' + (T + ih) + '" x2="' + x(yr * 12) + '" y2="' + (T + ih + 4) + '" stroke="#cfdad5"/>' +
-      '<text x="' + x(yr * 12) + '" y="' + (T + ih + 15) + '" text-anchor="middle" font-size="9.5" fill="#46564f">' + yr + "y</text>";
+      '<text x="' + x(yr * 12) + '" y="' + (T + ih + 15) + '" text-anchor="middle" font-size="9.5" fill="#3D4F47">' + yr + "y</text>";
   }
-  g += '<text x="' + (L + iw / 2) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="10" fill="#46564f">age</text>' +
-    '<text transform="translate(11,' + (T + ih / 2) + ') rotate(-90)" text-anchor="middle" font-size="10" fill="#46564f">' +
+  g += '<text x="' + (L + iw / 2) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="10" fill="#3D4F47">age</text>' +
+    '<text transform="translate(11,' + (T + ih / 2) + ') rotate(-90)" text-anchor="middle" font-size="10" fill="#3D4F47">' +
     (ind === "bfa" ? "BMI (kg/m²)" : "height (cm)") + "</text>";
   return '<svg viewBox="0 0 ' + W + " " + H + '" role="img">' + g + "</svg>";
 };
@@ -2288,12 +2340,12 @@ CH.slope = function (pairs) {
   [-3, -2, 0].forEach(z => {
     if (z < lo || z > hi) return;
     g += '<line x1="' + L + '" y1="' + y(z) + '" x2="' + x1 + '" y2="' + y(z) + '" stroke="' +
-      (z === 0 ? "#cfdad5" : "#f0c9c7") + '" stroke-dasharray="4 3"/>' +
-      '<text x="' + (L - 5) + '" y="' + (y(z) + 3.5) + '" text-anchor="end" font-size="9" fill="#78877f">' + (z > 0 ? "+" : "") + z + "</text>";
+      (z === 0 ? "#B9C6C0" : "#E3C79A") + '" stroke-dasharray="4 3"/>' +
+      '<text x="' + (L - 5) + '" y="' + (y(z) + 3.5) + '" text-anchor="end" font-size="9" fill="#63756C">' + (z > 0 ? "+" : "") + z + "</text>";
   });
   pairs.forEach(p => {
     const wasBad = p.b.bazCat && p.b.bazCat.under, isBad = p.e.bazCat && p.e.bazCat.under;
-    const col = (wasBad && !isBad) ? "#1a7a4c" : ((!wasBad && isBad) ? "#9b1c1c" : "#c8d3ce");
+    const col = (wasBad && !isBad) ? "#0E4A37" : ((!wasBad && isBad) ? "#7A3B0B" : "#B9C6C0");
     const tip = shortName(p.b.learner) + ": " + fmtZ(p.b.baz) + " → " + fmtZ(p.e.baz) + " (" +
       (p.b.bazCat ? p.b.bazCat.label : "—") + " → " + (p.e.bazCat ? p.e.bazCat.label : "—") + ")";
     g += '<g class="slopeline" ' + CH.tip(tip) + '><title>' + CH.esc(tip) + "</title>" +
@@ -2302,10 +2354,10 @@ CH.slope = function (pairs) {
       '<circle cx="' + x0 + '" cy="' + y(p.b.baz) + '" r="3.4" fill="' + col + '"/>' +
       '<circle cx="' + x1 + '" cy="' + y(p.e.baz) + '" r="3.4" fill="' + col + '"/></g>';
   });
-  g += '<text x="' + x0 + '" y="' + (T + ih + 16) + '" text-anchor="middle" font-size="10" font-weight="700" fill="#46564f">Baseline</text>' +
-    '<text x="' + x1 + '" y="' + (T + ih + 16) + '" text-anchor="middle" font-size="10" font-weight="700" fill="#46564f">Endline</text>' +
-    '<text x="' + (L + iw / 2) + '" y="' + (T - 8) + '" text-anchor="middle" font-size="9.5" fill="#78877f">each line is one learner · green improved, red worsened</text>' +
-    '<text transform="translate(11,' + (T + ih / 2) + ') rotate(-90)" text-anchor="middle" font-size="10" fill="#46564f">BMI-for-age z</text>';
+  g += '<text x="' + x0 + '" y="' + (T + ih + 16) + '" text-anchor="middle" font-size="10" font-weight="700" fill="#3D4F47">Baseline</text>' +
+    '<text x="' + x1 + '" y="' + (T + ih + 16) + '" text-anchor="middle" font-size="10" font-weight="700" fill="#3D4F47">Endline</text>' +
+    '<text x="' + (L + iw / 2) + '" y="' + (T - 8) + '" text-anchor="middle" font-size="9.5" fill="#63756C">each line is one learner · green improved, red worsened</text>' +
+    '<text transform="translate(11,' + (T + ih / 2) + ') rotate(-90)" text-anchor="middle" font-size="10" fill="#3D4F47">BMI-for-age z</text>';
   return '<svg viewBox="0 0 ' + W + " " + H + '" role="img">' + g + "</svg>";
 };
 
@@ -2334,7 +2386,7 @@ window.renderDashboard = function () {
   const c = curClass();
   if (!c || !learnersOf(c.id).length) {
     $("#dashSetup").hidden = true;
-    $("#dashZone").innerHTML = emptyState("📊", "Nothing to analyse yet",
+    $("#dashZone").innerHTML = emptyState(ICON.chart, "Nothing to analyse yet",
       "The dashboard is generated from your measurements. Add a class and measure a few learners first — or load the sample class from the Home screen to see what it produces.",
       "Go to step 1: Your class", () => go("class"));
     return;
@@ -2344,24 +2396,22 @@ window.renderDashboard = function () {
   $("#dashSetup").innerHTML =
     '<div class="row">' +
       '<div class="field" style="flex:1;min-width:165px;margin:0"><label for="dScope">Population</label>' + selectHTML("dScope", classOptions(true), scope) + "</div>" +
-      '<div class="field" style="flex:1;min-width:130px;margin:0"><label for="dRound">Round</label>' +
-        selectHTML("dRound", [{v:"baseline",t:"Baseline"},{v:"endline",t:"Endline"}], S.settings.round) + "</div>" +
-      '<div class="field" style="flex:1;min-width:110px;margin:0"><label for="dQ">Quarter</label>' +
-        selectHTML("dQ", ["Q1","Q2","Q3","Q4"].map(q => ({v:q,t:q})), S.settings.quarter) + "</div>" +
+      '<div class="field" style="flex:1;min-width:200px;margin:0"><label for="dRound">Measurement round</label>' +
+        selectHTML("dRound", [{v:"baseline",t:"Baseline — Quarter 1"},{v:"endline",t:"Endline — Quarter 4"}], S.settings.round) + "</div>" +
     "</div>" +
     '<div class="row" style="margin-top:.7rem"><button class="sec" ' + act(() => window.print()) + ' type="button" style="flex:1">Print this dashboard</button></div>';
   $("#dScope").addEventListener("change", e => { S.settings.dashScope = e.target.value; save(); renderDashboard(); });
-  $("#dRound").addEventListener("change", e => { S.settings.round = e.target.value; save(); renderDashboard(); });
-  $("#dQ").addEventListener("change", e => { S.settings.quarter = e.target.value; save(); renderDashboard(); });
+  $("#dRound").addEventListener("change", e => { S.settings.round = e.target.value; syncQuarter(); save(); renderDashboard(); });
 
   const rows = rowsFor(scope, S.settings.round);
   const M = rows.filter(r => r.meas && r.baz != null);
   const scopeName = scope === "*" ? "all classes" : className(classById(scope));
 
   if (!M.length) {
-    $("#dashZone").innerHTML = emptyState("⚖️", "No valid measurements in this round",
+    $("#dashZone").innerHTML = attributionBar() + emptyState(ICON.scale, "No valid measurements in this round",
       "Every figure below is computed from real measurements. Record some in step 2 and the dashboard builds itself.",
       "Go to step 2: Measure", () => go("measure")) + edcomSection() + refsSection();
+    hydrateAttrib($("#dashZone"));
     return;
   }
 
@@ -2374,23 +2424,22 @@ window.renderDashboard = function () {
   const und = M.filter(isUnder).length;
   if (dashSex === null) dashSex = M.filter(r => r.learner.sex === "F").length > M.filter(r => r.learner.sex === "M").length ? "F" : "M";
 
-  let h = "";
+  let h = attributionBar();
 
   /* ---------- A. sample description ---------- */
   const ages = M.map(r => r.ageM), boys = M.filter(r => r.learner.sex === "M").length;
   const totalEnrolled = (scope === "*" ? S.learners.length : learnersOf(scope).length);
   const withLearning = pairedRows(scope, S.settings.round, S.settings.quarter).filter(x => x.below !== null).length;
-  h += '<div class="card"><h2>Table 1. Description of the sample</h2>' +
-    '<p class="capt" style="font-size:.85rem;color:var(--ink-2)">' + esc(scopeName) + " · " + esc(S.settings.round) +
-    " round · " + esc(S.settings.quarter) + '</p>' +
-    '<div class="tw"><table class="stat"><tbody>' +
+  h += '<div class="card">' + tableBlock(1, "Description of the sample",
+    '<table class="stat"><tbody>' +
     trow("Learners enrolled", totalEnrolled) +
     trow("Learners with a valid measurement (analytic sample, <em>n</em>)", n + " (" + pct(n, totalEnrolled).toFixed(1) + "% of enrolled)") +
     trow("Boys / girls", boys + " / " + (n - boys)) +
     trow("Age, mean ± standard deviation", (Stats.mean(ages) / 12).toFixed(1) + " ± " + (Stats.sd(ages) / 12).toFixed(1) + " years") +
     trow("Age range", (Math.min.apply(null, ages) / 12).toFixed(1) + " to " + (Math.max.apply(null, ages) / 12).toFixed(1) + " years") +
     trow("Also has a " + esc(def.short) + " level recorded", withLearning + " (" + pct(withLearning, n).toFixed(1) + "%)") +
-    "</tbody></table></div>" +
+    "</tbody></table>",
+    esc(scopeName) + " · " + esc(roundLabel(S.settings.round)) + ". The analytic sample is every learner with a height, a weight and a valid birth date; learners outside the 5–19 year range covered by the growth reference are excluded.") +
     (n < 30 ? '<div class="note warn" style="margin-top:.8rem"><p style="margin:0"><strong>Small sample.</strong> With <em>n</em> = ' + n +
       ", every interval below is wide and every test is underpowered. The figures are still the correct description of <em>these</em> learners; they are weak evidence about learners in general.</p></div>" : "") +
     "</div>";
@@ -2401,43 +2450,43 @@ window.renderDashboard = function () {
     return trow(k, v + " / " + n + " &nbsp; <b>" + pct(v, n).toFixed(1) + "%</b> <span class='muted'>(" +
       (100 * lo).toFixed(1) + "–" + (100 * hi).toFixed(1) + "%)</span>");
   };
-  h += '<div class="card"><h2>Table 2. Prevalence of malnutrition</h2>' +
-    '<p class="capt" style="font-size:.85rem;color:var(--ink-2)">Percentages with 95% confidence intervals (Wilson score method).</p>' +
-    '<div class="tw"><table class="stat"><thead><tr><th>Indicator</th><th>n / N, % (95% CI)</th></tr></thead><tbody>' +
+  h += '<div class="card">' + tableBlock(2, "Prevalence of undernutrition and overnutrition",
+    '<table class="stat"><thead><tr><th>Indicator</th><th>n / N, % (95% CI)</th></tr></thead><tbody>' +
     prev("Wasted or severely wasted (BMI-for-age &lt; −2 SD)", wasted) +
     prev("&nbsp;&nbsp;of which severely wasted (&lt; −3 SD)", bc.SW) +
     prev("Stunted or severely stunted (height-for-age &lt; −2 SD)", stunted) +
     prev("&nbsp;&nbsp;of which severely stunted (&lt; −3 SD)", hc.SS) +
     prev("Overweight or obese (BMI-for-age &gt; +1 SD)", over) +
     prev("Undernourished on either indicator", und) +
-    "</tbody></table></div>" +
-    '<p class="src" style="font-size:.76rem;color:var(--ink-3);border-top:1px dashed var(--line);padding-top:.5rem;margin-top:.7rem">' +
-    "Classified against the World Health Organization Growth Reference for children and adolescents aged 5–19 years. " +
-    "Population prevalence thresholds published by the World Health Organization and the United Nations Children's Fund are defined for children under five at population scale and are not applied here to a single class.</p></div>";
+    "</tbody></table>",
+    "Confidence intervals are Wilson score intervals, which stay valid at small sample sizes and near 0% or 100%. " +
+    "Classification follows the World Health Organization Growth Reference for children and adolescents aged 5–19 years. " +
+    "Population prevalence thresholds published by the World Health Organization and the United Nations Children's Fund are defined for children under five at population scale, and are deliberately not applied here to a single class.") +
+    "</div>";
 
   /* ---------- C. composition figures (donuts) ---------- */
   h += '<div class="dashgrid c2">' +
-    figure("figBaz", "Figure 1. Nutritional status composition",
-      "Share of the " + n + " measured learners in each BMI-for-age category. Body mass index for age reflects <em>current</em> nutrition and responds to feeding.",
+    figure("figBaz", 1, "Composition of nutritional status (body mass index for age)",
+      "Share of the " + n + " measured learners in each category. Body mass index for age reflects <em>current</em> nutrition and responds to feeding. Severe categories are hatched so they remain distinguishable in greyscale and to readers with colour vision deficiency.",
       CH.donut(BAZ_CATS.map(x => ({ label: x.label, value: bc[x.key], color: CATCOL[x.key], key: x.key })), { centre: "measured" }),
-      "Categories: World Health Organization Growth Reference 5–19 years.") +
-    figure("figHaz", "Figure 2. Height-for-age composition",
-      "Height for age reflects <em>long-term</em> nutrition. Stunting present here largely originated before school entry and will not be reversed by feeding now.",
+      "Categories defined by the World Health Organization Growth Reference 5–19 years.") +
+    figure("figHaz", 2, "Composition of height for age",
+      "Height for age reflects <em>long-term</em> nutrition. Stunting seen here largely originated before school entry and will not be reversed by feeding now, but it identifies learners who began school already disadvantaged.",
       CH.donut(HAZ_CATS.map(x => ({ label: x.label, value: hc[x.key], color: CATCOL[x.key], key: x.key })), { centre: "measured" }),
-      "Categories: World Health Organization Growth Reference 5–19 years.") +
+      "Categories defined by the World Health Organization Growth Reference 5–19 years.") +
     "</div>";
 
   /* ---------- D. distribution vs the reference population ---------- */
   const tB = Stats.oneSampleT(bazV, 0), tH = hazV.length > 1 ? Stats.oneSampleT(hazV, 0) : { ok: false };
   const zvals = dashInd === "bfa" ? bazV : hazV;
   const tCur = dashInd === "bfa" ? tB : tH;
-  h += figure("figHist", "Figure 3. Distribution of z-scores against the reference population",
-    "Bars are your learners. The dashed curve is what a well-nourished reference population of the same size would look like. A whole distribution shifted left is a different — and more serious — finding than a few individuals below the line.",
+  h += figure("figHist", 3, "Distribution of z-scores against the reference population",
+    "Bars are the measured learners. The dashed curve is what a well-nourished reference population of the same size would look like. A whole distribution shifted left is a different and more serious finding than a few individuals falling below the cut-off.",
     CH.histogram(zvals, { meanZ: tCur.ok ? tCur.mean : null, xlabel: (dashInd === "bfa" ? "BMI-for-age" : "Height-for-age") + " z-score" }),
-    "Reference distribution: standard normal, the definition of the World Health Organization z-score scale.",
+    "Reference distribution is the standard normal curve, which is the definition of the World Health Organization z-score scale.",
     '<div class="legend">' +
-      '<button type="button" ' + act(() => { dashInd = "bfa"; renderDashboard(); }) + ' aria-pressed="' + (dashInd === "bfa") + '"><span class="sw" style="background:#2f9470"></span>BMI-for-age</button>' +
-      '<button type="button" ' + act(() => { dashInd = "hfa"; renderDashboard(); }) + ' aria-pressed="' + (dashInd === "hfa") + '"><span class="sw" style="background:#1f5a94"></span>Height-for-age</button>' +
+      '<button type="button" ' + act(() => { dashInd = "bfa"; renderDashboard(); }) + ' aria-pressed="' + (dashInd === "bfa") + '"><span class="sw" style="background:#0E4A37"></span>Body mass index for age</button>' +
+      '<button type="button" ' + act(() => { dashInd = "hfa"; renderDashboard(); }) + ' aria-pressed="' + (dashInd === "hfa") + '"><span class="sw" style="background:#B26A05"></span>Height for age</button>' +
     "</div>" +
     (tCur.ok ? statbox(
       "One-sample <em>t</em> test against the reference median (z = 0)",
@@ -2450,10 +2499,10 @@ window.renderDashboard = function () {
         : "The group average is not detectably different from the reference median.") : ""));
 
   /* ---------- E. growth reference plot ---------- */
-  h += figure("figGrowth", "Figure 4. Each learner against the growth reference",
-    "Every dot is one learner plotted at their exact age. The shaded bands are the World Health Organization cut-offs — orange is between −3 and −2 standard deviations, red is below −3.",
+  h += figure("figGrowth", 4, "Individual learners plotted against the growth reference",
+    "Each dot is one learner at their exact age in completed months. The shaded bands are the World Health Organization cut-offs: the lighter band lies between −3 and −2 standard deviations, the darker band below −3. Learners in a severe category are drawn larger with a dark outline.",
     CH.growth(M, dashInd, dashSex),
-    "Curves computed from the World Health Organization Growth Reference 5–19 years L, M and S parameters.",
+    "Curves computed from the L, M and S parameters of the World Health Organization Growth Reference 5–19 years.",
     '<div class="legend">' +
       '<button type="button" ' + act(() => { dashSex = "M"; renderDashboard(); }) + ' aria-pressed="' + (dashSex === "M") + '">Boys</button>' +
       '<button type="button" ' + act(() => { dashSex = "F"; renderDashboard(); }) + ' aria-pressed="' + (dashSex === "F") + '">Girls</button>' +
@@ -2474,6 +2523,7 @@ window.renderDashboard = function () {
   h += methodsSection() + edcomSection() + refsSection();
 
   $("#dashZone").innerHTML = h;
+  hydrateAttrib($("#dashZone"));
 };
 
 function trow(k, v) { return "<tr><th style='font-weight:600;text-transform:none;font-size:.86rem;letter-spacing:0;background:none'>" + k + "</th><td>" + v + "</td></tr>"; }
@@ -2487,10 +2537,11 @@ function statbox(title, line, sig, note) {
 function associationSection(scope, n, def) {
   const paired = pairedRows(scope, S.settings.round, S.settings.quarter).filter(x => x.below !== null);
   if (paired.length < 2) {
-    return '<div class="fig"><h3><span class="leaf">❧</span>Figure 5. Nutrition against ' + esc(def.short) + "</h3>" +
-      '<p class="capt">This is the analysis SIBOL exists for, and it needs one more input: a ' + esc(def.short) +
+    return '<figure class="fig" style="margin:0 0 .9rem"><figcaption class="fig-head"><span class="leaf">' + ICON.leaf +
+      '</span> <span class="num">Figure 5.</span> Percentage below the ' + esc(def.short) + " benchmark, by nutritional status</figcaption>" +
+      '<p class="fig-note"><b>Note.</b> This is the analysis SIBOL exists for, and it needs one more input: a ' + esc(def.short) +
       " level for each learner. Without it the nutrition data stays a compliance count.</p>" +
-      '<div class="empty" style="padding:1rem"><button type="button" ' + act(() => go("learning")) + ">Enter " + esc(def.short) + " levels</button></div></div>";
+      '<div class="empty" style="padding:1rem"><button type="button" ' + act(() => go("learning")) + ">Enter " + esc(def.short) + " levels</button></div></figure>";
   }
   const a = paired.filter(x =>  isUnder(x.r) &&  x.below).length;
   const b = paired.filter(x =>  isUnder(x.r) && !x.below).length;
@@ -2502,9 +2553,9 @@ function associationSection(scope, n, def) {
   const w1 = Stats.wilson(a, n1), w2 = Stats.wilson(c, n2);
 
   const barSvg = CH.bars([
-    { label: "Needs nutrition\nattention\n(n=" + n1 + ")", value: pct(a, n1), lo: 100 * w1[0], hi: 100 * w1[1], color: "#c25c14",
+    { label: "Needs nutrition\nattention\n(n=" + n1 + ")", value: pct(a, n1), lo: 100 * w1[0], hi: 100 * w1[1], color: "#B26A05",
       tip: "Undernourished: " + a + " of " + n1 + " below benchmark = " + pct(a, n1).toFixed(1) + "% (95% CI " + (100*w1[0]).toFixed(1) + "–" + (100*w1[1]).toFixed(1) + "%)" },
-    { label: "Nutrition OK\n(n=" + n2 + ")", value: pct(c, n2), lo: 100 * w2[0], hi: 100 * w2[1], color: "#2f9470",
+    { label: "Nutrition OK\n(n=" + n2 + ")", value: pct(c, n2), lo: 100 * w2[0], hi: 100 * w2[1], color: "#0E4A37",
       tip: "Nutrition OK: " + c + " of " + n2 + " below benchmark = " + pct(c, n2).toFixed(1) + "% (95% CI " + (100*w2[0]).toFixed(1) + "–" + (100*w2[1]).toFixed(1) + "%)" }
   ], { max: 100, unit: "%", dp: 1 });
 
@@ -2538,17 +2589,21 @@ function associationSection(scope, n, def) {
     "OR = " + or.or.toFixed(2) + " · " + Stats.fmtCI(or.lo, or.hi) + (or.corrected ? " · Haldane–Anscombe correction applied (empty cell)" : ""),
     null, "");
 
-  return figure("figAssoc", "Figure 5. Nutrition against " + def.short,
-    "Percentage below the " + esc(def.short) + " benchmark in each nutrition group, with 95% confidence intervals. " +
-    "Non-overlapping intervals are a strong signal; overlapping ones are not proof of no difference.",
-    barSvg,
-    "Benchmark defined by the teacher-recorded " + esc(def.label.toLowerCase()) + ". Nutrition status: World Health Organization Growth Reference 5–19 years.",
-    '<div class="tw" style="margin-top:.8rem"><table class="stat"><caption style="text-align:left;font-size:.82rem;color:var(--ink-2);padding-bottom:.4rem">Table 3. Contingency table</caption>' +
-    '<thead><tr><th></th><th class="num">Below benchmark</th><th class="num">At or above</th><th class="num">Total</th></tr></thead><tbody>' +
+  const tbl = '<div class="card">' + tableBlock(3,
+    "Nutritional status by " + def.short + " benchmark, " + roundLabel(S.settings.round),
+    '<table class="stat"><thead><tr><th></th><th class="num">Below benchmark</th><th class="num">At or above</th><th class="num">Total</th></tr></thead><tbody>' +
     '<tr class="flag"><th>Undernourished</th><td class="num">' + a + '</td><td class="num">' + b + '</td><td class="num">' + n1 + "</td></tr>" +
     '<tr><th>Nutrition OK</th><td class="num">' + c + '</td><td class="num">' + d + '</td><td class="num">' + n2 + "</td></tr>" +
     '<tr style="font-weight:700"><th>Total</th><td class="num">' + (a + c) + '</td><td class="num">' + (b + d) + '</td><td class="num">' + N + "</td></tr>" +
-    "</tbody></table></div>" + stats);
+    "</tbody></table>",
+    "Undernourished means below −2 standard deviations on body mass index for age, on height for age, or on both. " +
+    "The benchmark is the teacher-recorded " + esc(def.label.toLowerCase()) + ".") + stats + "</div>";
+
+  return tbl + figure("figAssoc", 5, "Percentage below the " + def.short + " benchmark, by nutritional status",
+    "Error bars are 95% confidence intervals. Intervals that do not overlap are strong evidence of a real difference; overlapping intervals are <em>not</em> proof that no difference exists.",
+    barSvg,
+    "Nutritional status from the World Health Organization Growth Reference 5–19 years; benchmark from the teacher-recorded " +
+    esc(def.label.toLowerCase()) + ".");
 }
 
 function radarSection(scope) {
@@ -2572,14 +2627,14 @@ function radarSection(scope) {
   };
   const base = profile("baseline"), end = profile("endline");
   const series = [];
-  if (base) series.push({ name: "Baseline", values: base, color: "#c25c14" });
-  if (end)  series.push({ name: "Endline",  values: end,  color: "#146b4f" });
+  if (base) series.push({ name: "Baseline (Q1)", values: base, color: "#B26A05" });
+  if (end)  series.push({ name: "Endline (Q4)",  values: end,  color: "#0E4A37" });
   if (!series.length) return "";
   const legend = '<div class="legend">' + series.map(sr =>
     '<button type="button" aria-pressed="true"><span class="sw" style="background:' + sr.color + '"></span>' + esc(sr.name) + "</button>").join("") + "</div>";
-  return figure("figRadar", "Figure 6. Whole-class risk profile",
-    "Six problems on one shape, each as a percentage of the group. A radar makes it obvious when a class is not failing on one thing but on several at once" +
-    (series.length > 1 ? " — and whether the shape shrank between the two measurement rounds." : ".") ,
+  return figure("figRadar", 6, "Whole-group risk profile across six indicators",
+    "Each axis is a percentage of the group; the outer ring is 100%. A radar shows when a class is failing on several indicators at once rather than one" +
+    (series.length > 1 ? ", and whether the shape shrank between baseline and endline." : ".") ,
     CH.radar(axes, series),
     "Axes computed from the World Health Organization Growth Reference 5–19 years and the teacher-recorded learning benchmark.",
     legend);
@@ -2590,8 +2645,9 @@ function movementSection(scope) {
   const endMap = {}; rowsFor(scope, "endline").filter(r => r.baz != null).forEach(r => endMap[r.learner.id] = r);
   const pairs = base.map(r => ({ b: r, e: endMap[r.learner.id] })).filter(x => x.e);
   if (!pairs.length) {
-    return '<div class="fig"><h3><span class="leaf">❧</span>Figure 7. Change from baseline to endline</h3>' +
-      '<p class="capt">Fills in once the same learners have been measured twice. It then answers the question the feeding programme is actually judged on: how many moved back into the healthy range.</p></div>';
+    return '<figure class="fig" style="margin:0 0 .9rem"><figcaption class="fig-head"><span class="leaf">' + ICON.leaf +
+      '</span> <span class="num">Figure 7.</span> Change in body mass index for age, baseline to endline</figcaption>' +
+      '<p class="fig-note"><b>Note.</b> This fills in once the same learners have been measured in both rounds. It then answers the question the feeding programme is actually judged on: how many returned to the healthy range.</p></figure>';
   }
   const wasBad = x => x.b.bazCat && x.b.bazCat.under, isBad = x => x.e.bazCat && x.e.bazCat.under;
   const started = pairs.filter(wasBad), recovered = started.filter(x => !isBad(x));
@@ -2622,10 +2678,10 @@ function movementSection(scope) {
       tPair.p < 0.05,
       tPair.p < 0.05 ? "The group as a whole moved " + (tPair.mean > 0 ? "up" : "down") + ", not just a few individuals." : "No detectable movement in the group average.");
   }
-  return figure("figSlope", "Figure 7. Change from baseline to endline",
-    "One line per learner. This shows what a pair of percentages hides: whether the same children improved, or whether some improved while others slipped.",
+  return figure("figSlope", 7, "Change in body mass index for age, baseline to endline",
+    "One line per learner, Quarter 1 to Quarter 4. This shows what a pair of summary percentages hides: whether the <em>same</em> children improved, or whether some improved while others slipped.",
     CH.slope(pairs),
-    "Status categories: World Health Organization Growth Reference 5–19 years.", extra);
+    "Status categories from the World Health Organization Growth Reference 5–19 years.", extra);
 }
 
 /* ---------- methods ---------- */
@@ -2645,6 +2701,40 @@ function methodsSection() {
     '<div class="note warn"><p style="margin:0"><strong>Interpretation limits.</strong> These are observational classroom data. A statistically significant association shows that undernutrition and low learning attainment occur in the same children; it does not establish that one caused the other. Reverse causation and confounding by household poverty, absenteeism and prior schooling are all plausible and are not adjusted for. The learning measure is teacher-reported and is not a validated instrument.</p></div></div>';
 }
 
+
+
+/* ---------- attribution: named marks, with drop-in slots for official emblems ----------
+   The World Health Organization emblem and the marks of the Department of Education and of
+   EDCOM II are protected and are deliberately NOT reproduced here. Each badge below is an
+   original SIBOL mark that names the organisation in words. If a deployment is authorised to
+   display the official emblems, drop logo-who.png, logo-deped.png or logo-edcom.png beside
+   index.html and they are picked up automatically. */
+const ATTRIB = [
+  { file: "logo-who.png",   icon: "heart",  name: "World Health Organization",
+    sub: "Growth Reference 5–19 years (2007) — classification standard" },
+  { file: "logo-deped.png", icon: "doc",    name: "Department of Education",
+    sub: "School Form 8 · School-Based Feeding Program" },
+  { file: "logo-edcom.png", icon: "scroll", name: "EDCOM II",
+    sub: "Second Congressional Commission on Education — policy context" }
+];
+function attributionBar() {
+  return '<div class="attrib">' + ATTRIB.map((o, i) =>
+    '<div class="org" data-attrib="' + i + '"><span class="mk">' + ICON[o.icon] +
+    '</span><span class="tx"><b>' + CH.esc(o.name) + "</b><small>" + CH.esc(o.sub) + "</small></span></div>").join("") + "</div>";
+}
+/** swap in an official emblem if the school has supplied one */
+function hydrateAttrib(root) {
+  (root || document).querySelectorAll("[data-attrib]").forEach(el => {
+    const o = ATTRIB[+el.dataset.attrib]; if (!o) return;
+    const img = new Image();
+    img.onload = () => {
+      const mk = el.querySelector(".mk");
+      if (mk) { mk.innerHTML = ""; mk.style.background = "#fff"; mk.appendChild(img); img.alt = o.name; }
+    };
+    img.onerror = () => {};
+    img.src = o.file;
+  });
+}
 
 /* ---------- EDCOM II policy alignment ---------- */
 function edcomSection() {
@@ -2671,8 +2761,8 @@ function edcomSection() {
     "<p style='font-size:.93rem'>The final report names increased investment in early childhood nutrition among its top priorities, citing the Expanded National Nutrition Survey of the Department of Science and Technology–Food and Nutrition Research Institute: <strong>close to 24% of Filipino children under five are stunted</strong>, rising to <strong>34% in the Bangsamoro region</strong>. The ten-year plan's pillars are early childhood development, foundational literacy and numeracy, inclusive and equitable learning environments, and evidence-guided resource allocation with stronger governance and accountability.</p>" +
     "</div>" +
 
-    '<div class="edcom" style="border-left-color:#c25c14;background:linear-gradient(180deg,#fdf4ec,#fff)">' +
-    '<span class="pill2" style="background:#c25c14">Where SIBOL fits — and where it does not</span>' +
+    '<div class="edcom" style="border-left-color:var(--yl);background:linear-gradient(180deg,var(--yl-lt),#fff)">' +
+    '<span class="pill2" style="background:#7A3B0B;color:#FFD75E">Where SIBOL fits — and where it does not</span>' +
     "<p style='font-size:.93rem;margin-bottom:.4rem'>The commission's nutrition emphasis is on the first 1,000 days. <strong>SIBOL cannot act there.</strong> By the time a learner reaches Grade 4, stunting has already happened and feeding will not reverse it.</p>" +
     "<p style='font-size:.93rem;margin-bottom:0'>What SIBOL does is the school-age end of the same problem: it identifies which learners arrived already affected, separates them from those whose problem is current and still treatable, and connects both to how the child is actually learning — so that a school can act on named children this quarter instead of reporting a percentage upward.</p>" +
     "</div>" +
@@ -2689,7 +2779,9 @@ function edcomSection() {
     "<li>Department of Science and Technology–Food and Nutrition Research Institute. <em>Expanded National Nutrition Survey</em>.</li>" +
     "</ol>" +
     '<p class="src" style="font-size:.78rem;color:var(--ink-3);border-top:1px dashed var(--line);padding-top:.5rem">' +
-    "This alignment is SIBOL's own claim about its relevance. SIBOL is an independent tool and is not endorsed by, affiliated with, or produced for the Second Congressional Commission on Education, the Department of Education, or the World Health Organization.</p></div>";
+    "This alignment is SIBOL's own claim about its relevance. SIBOL is an independent tool and is not endorsed by, affiliated with, or produced for the Second Congressional Commission on Education, the Department of Education, or the World Health Organization. " +
+    "Their official emblems are protected marks and are deliberately not reproduced in this file — the badges at the top of this dashboard are original SIBOL marks that name each organisation in words. " +
+    "A deployment authorised to display the official emblems can place <span class='mono'>logo-who.png</span>, <span class='mono'>logo-deped.png</span> or <span class='mono'>logo-edcom.png</span> beside <span class='mono'>index.html</span> and they will appear automatically.</p></div>";
 }
 
 /* ---------- references ---------- */
@@ -2720,11 +2812,25 @@ function refsSection() {
 /* expose for the test harness and for anyone auditing the figures */
 if (typeof window !== "undefined") { window.CH = CH; window.Stats = Stats; }
 
-function figure(id, title, caption, svg, source, extra) {
-  return '<div class="fig" id="' + id + '"><h3><span class="leaf">❧</span>' + CH.esc(title) + "</h3>" +
-    '<p class="capt">' + caption + "</p>" + svg +
+/**
+ * Renders one numbered figure. Convention followed throughout the dashboard:
+ * the figure number and title sit ABOVE the graphic; the descriptive Note and
+ * the Source sit BELOW it. Table numbers and titles also sit above their table,
+ * with the note below. This is the standard scientific reporting order.
+ */
+function figure(id, num, title, note, svg, source, extra) {
+  return '<figure class="fig" id="' + id + '" style="margin:0 0 .9rem">' +
+    '<figcaption class="fig-head"><span class="leaf">' + ICON.leaf + '</span> <span class="num">Figure ' + num + '.</span> ' + CH.esc(title) + "</figcaption>" +
+    svg +
     '<div class="chart-info idle">Tap or hover any part of the figure for the exact numbers.</div>' +
-    (extra || "") + (source ? '<p class="src">' + source + "</p>" : "") + "</div>";
+    (extra || "") +
+    (note ? '<p class="fig-note"><b>Note.</b> ' + note + "</p>" : "") +
+    (source ? '<p class="src"><b>Source.</b> ' + source + "</p>" : "") + "</figure>";
+}
+function tableBlock(num, title, tableHTML, note) {
+  return '<div class="tbl-head"><span class="num">Table ' + num + '.</span> ' + CH.esc(title) + "</div>" +
+    '<div class="tw">' + tableHTML + "</div>" +
+    (note ? '<p class="tbl-note"><b>Note.</b> ' + note + "</p>" : "");
 }
 </script>
 
