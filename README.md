@@ -110,8 +110,8 @@ Step through to **Dashboard** for the same findings presented for a supervisor, 
 | 3 | **Histogram with reference normal curve** | Distribution. Shows whether the *whole class* has shifted left rather than whether a few individuals fell below a line — a different and more serious finding. |
 | 4 | **Line chart, growth reference** | Each learner plotted at their exact age against the World Health Organization −3, −2, median and +2 standard deviation curves, with the danger bands shaded. Toggles between sexes and between the two indicators. |
 | 5 | **Bar chart with 95% confidence intervals** | Comparison of two proportions. Error bars are shown because a bare pair of percentages from a class of forty is not a finding. |
-| 6 | **Radar** | Multivariate profile — six risks on one shape, and if both rounds exist, whether that shape shrank. This is the case where a radar is genuinely the right tool rather than decoration. |
-| 7 | **Slope chart** | Paired change. Shows whether the same children improved, which a pair of summary percentages hides completely. |
+| 6 | **Radar** | Multivariate profile — six risks on one shape, with baseline (Q1) and endline (Q4) overlaid. This is the case where a radar is genuinely the right tool rather than decoration. |
+| 7 | **Slope chart** | Paired change, Quarter 1 to Quarter 4. Shows whether the same children improved, which a pair of summary percentages hides completely. |
 
 **Inferential statistics reported**
 
@@ -135,6 +135,39 @@ The dashboard closes with a policy-alignment section covering the **Second Congr
 It also says what SIBOL **cannot** do. The commission's nutrition emphasis is the first 1,000 days; by Grade 4 stunting has already happened and feeding will not reverse it. SIBOL works the school-age end of the same problem — identifying who arrived already affected, separating them from those whose problem is current and treatable, and connecting both to how the child is actually learning. Claiming more than that would be dishonest.
 
 SIBOL is independent and is not endorsed by or affiliated with EDCOM II, the Department of Education, or the World Health Organization.
+
+---
+
+## Design
+
+**Palette.** Dark green (`#0E4A37`), white, and yellow (`#F2C230` / `#FDF3D0`). Every text-on-background pair that carries a number was contrast-checked against WCAG AA — 33 pairs, all passing, the lowest at 4.89:1 for small grey axis labels where the standard is 3.0:1. Numerals are given an explicit dark ink colour rather than inheriting whatever the parent had.
+
+**Severity encoding.** Nutrition categories run dark green (healthy) → yellow → amber → dark brown (severe), staying inside the palette. The two severe categories are **additionally hatched** in the figures and drawn with a heavier dark outline on the growth chart, so they remain distinguishable in greyscale, in a photocopy, and to readers with colour vision deficiency. Colour alone is never the only signal.
+
+**Icons.** Original line art drawn as inline SVG, inheriting `currentColor`. No emoji anywhere in the file.
+
+**Caption convention.** Figures are `<figure>` elements: **number and title above** the graphic, ***Note.*** and ***Source.*** below it. Tables carry **number and title above**, note below. Figures are numbered 1–7 and tables 1–3, in order of appearance. The contingency table was pulled out of the figure block it was previously buried in and given its own numbered table.
+
+## Baseline and endline only
+
+SIBOL reports on the two mandated measurement rounds, and the learning indicator is bound to them:
+
+- **Baseline → Quarter 1**
+- **Endline → Quarter 4**
+
+There is no free quarter picker anywhere; choosing a round sets the quarter. If an earlier version left reading levels recorded against Quarter 2 or Quarter 3, **Settings** surfaces them and offers to move them (Q2 → Q1, Q3 → Q4) or delete them — it does not silently discard them.
+
+## Official emblems
+
+The World Health Organization emblem is a protected mark, and the Department of Education and EDCOM II marks are government marks. **None of them are reproduced in this file.** Copying them into a published repository would risk implying an endorsement that does not exist.
+
+The dashboard instead carries an attribution bar of three original SIBOL badges, each naming its organisation in words and stating what SIBOL takes from it. If your deployment is authorised to display the official emblems, drop any of these beside `index.html` and they are picked up automatically at render time:
+
+```
+logo-who.png      logo-deped.png      logo-edcom.png
+```
+
+SIBOL remains independent and is not endorsed by, affiliated with, or produced for any of the three.
 
 ---
 

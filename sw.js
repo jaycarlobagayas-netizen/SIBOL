@@ -1,6 +1,6 @@
 /* SIBOL service worker — offline-first cache.
    Bump CACHE when you deploy a new index.html or a rebuilt who-lms.json. */
-const CACHE = "sibol-v2.1.0";
+const CACHE = "sibol-v2.2.0";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./who-lms.json"];
 
 self.addEventListener("install", e => {
