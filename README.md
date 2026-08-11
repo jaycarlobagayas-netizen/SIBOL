@@ -92,6 +92,52 @@ Teachers see plain sentences. The statistics sit under **“Show the numbers”*
 
 ---
 
+## The statistical dashboard
+
+Step through to **Dashboard** for the same findings presented for a supervisor, a division office or a research reviewer. Everything is computed in the browser from the underlying records and prints to PDF.
+
+**Tables**
+
+- **Table 1 — Description of the sample.** Enrolled, analytic *n*, boys/girls, age mean ± standard deviation and range, and how much of the sample also has a learning level recorded. Flags samples under 30 as underpowered rather than letting the reader assume otherwise.
+- **Table 2 — Prevalence of malnutrition.** Wasting, severe wasting, stunting, severe stunting, overweight/obesity and the combined figure, each as n/N with a percentage and a 95% Wilson score confidence interval.
+- **Table 3 — Contingency table.** The 2 × 2 of nutritional status against learning benchmark.
+
+**Figures** — hand-drawn inline SVG, no chart library, no content delivery network, works offline. Every element is hoverable and tappable and reports its exact numbers in the bar beneath the figure.
+
+| Figure | Type | Why this type |
+|---|---|---|
+| 1 & 2 | **Donut** | Composition — share of one group across mutually exclusive categories. A pie family chart is the right choice for parts of a whole, and only for that. |
+| 3 | **Histogram with reference normal curve** | Distribution. Shows whether the *whole class* has shifted left rather than whether a few individuals fell below a line — a different and more serious finding. |
+| 4 | **Line chart, growth reference** | Each learner plotted at their exact age against the World Health Organization −3, −2, median and +2 standard deviation curves, with the danger bands shaded. Toggles between sexes and between the two indicators. |
+| 5 | **Bar chart with 95% confidence intervals** | Comparison of two proportions. Error bars are shown because a bare pair of percentages from a class of forty is not a finding. |
+| 6 | **Radar** | Multivariate profile — six risks on one shape, and if both rounds exist, whether that shape shrank. This is the case where a radar is genuinely the right tool rather than decoration. |
+| 7 | **Slope chart** | Paired change. Shows whether the same children improved, which a pair of summary percentages hides completely. |
+
+**Inferential statistics reported**
+
+- Chi-square test of independence with Yates' continuity correction, degrees of freedom, *p*, and Cramér's V as effect size
+- Risk ratio with a 95% interval by the Katz method; odds ratio with Woolf's interval and a Haldane–Anscombe correction when a cell is empty
+- Difference in proportions with a 95% interval
+- One-sample *t* test of the mean z-score against the reference median, so a group-level shift can be distinguished from individual outliers
+- McNemar's test on paired change in status, plus a paired *t* test on change in z-score
+- Wilson score intervals throughout
+
+Where the smallest expected cell count falls below 5, the chi-square result is **labelled unreliable and Fisher's exact test named as the correct alternative** rather than being reported as though it were sound. Tail probabilities come from series and continued-fraction expansions of the incomplete gamma and incomplete beta functions, which is why no statistical library is needed and the whole thing still runs with no signal.
+
+A **Statistical methods** section states the LMS formula, the ±3 standard deviation truncation rule, the reporting conventions, and — plainly — that these are observational classroom data, that association is not causation, and that household poverty, absenteeism and prior schooling are unadjusted confounders.
+
+A full **reference list** covers the growth reference (de Onis et al. 2007; Cole 1990; Cole & Green 1992) and every statistical method used (Wilson 1927; Fisher 1922; Yates 1934; Cramér 1946; McNemar 1947; Woolf 1955; Katz et al. 1978; Agresti & Coull 1998; de Onis et al. 2019). **World Health Organization** is spelled out throughout; where the acronym appears inside a published article title it is left verbatim and annotated, because titles are not ours to edit.
+
+## EDCOM II alignment
+
+The dashboard closes with a policy-alignment section covering the **Second Congressional Commission on Education (EDCOM II)** — its 28 priority areas, its three reports (*Miseducation*, January 2024; *Fixing the Foundations*, January 2025; *Turning Point: A Decade of Necessary Reforms 2026–2035*, February 2026), the stunting figures it cites from the Expanded National Nutrition Survey, and a table mapping each of the commission's directions to what SIBOL actually contributes.
+
+It also says what SIBOL **cannot** do. The commission's nutrition emphasis is the first 1,000 days; by Grade 4 stunting has already happened and feeding will not reverse it. SIBOL works the school-age end of the same problem — identifying who arrived already affected, separating them from those whose problem is current and treatable, and connecting both to how the child is actually learning. Claiming more than that would be dishonest.
+
+SIBOL is independent and is not endorsed by or affiliated with EDCOM II, the Department of Education, or the World Health Organization.
+
+---
+
 ## Privacy
 
 - All data lives in this browser's IndexedDB on this device. Nothing is transmitted anywhere.
